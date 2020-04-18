@@ -62,17 +62,18 @@ def main():
                              build_data['version'])
 
     # Determine whether or not this is a release or CI image.
-    upload_dir = 'ci'
-    if re.match(r'^v?\d+\.\d+\.\d(-\d+)?$', build_data['version']):
-        upload_dir = 'release'
+    upload_dir = 'ova'
+    #upload_dir = 'ci'
+    # if re.match(r'^v?\d+\.\d+\.\d(-\d+)?$', build_data['version']):
+    #    upload_dir = 'release'
 
     # Get the path to the GCS OVA and its checksum.
-    gcs_ova = "gs://capv-images/extra/haproxy/%s/%s/%s" % (
+    gcs_ova = "gs://load-balancer-api/ova/%s/%s/%s" % (
         upload_dir, build_data['version'], rem_ova)
     gcs_ova_sum = "%s.sha256" % gcs_ova
 
     # Get the URL of the OVA and its checksum.
-    url_ova = "http://storage.googleapis.com/capv-images/extra/haproxy/%s/%s/%s" % (
+    url_ova = "http://storage.googleapis.com/load-balancer-api/%s/%s/%s" % (
         upload_dir, build_data['version'], rem_ova)
     url_ova_sum = "%s.sha256" % url_ova
 
