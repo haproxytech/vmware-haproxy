@@ -1,0 +1,33 @@
+# Copyright (c) 2020 VMware, Inc. All Rights Reserved.
+# SPDX-License-Identifier: Apache-2.0
+---
+common_photon_rpms:
+- conntrack-tools
+- distrib-compat
+- ebtables
+- iputils
+- iproute2
+- jq
+- lsof
+- net-tools
+- ntp
+- openssl-c_rehash
+- open-vm-tools
+- pcre
+- psmisc
+- python-netifaces
+- python3-pip
+- python-requests
+- rpm
+- sed
+- socat
+- tar
+- unzip
+- vim
+
+disable_public_repos: false
+extra_rpms: ""
+extra_repos: ""
+# photon does not have backward compatibility for legacy distro behavior for sysctl.conf by default
+# as it uses systemd-sysctl. set this var so we can use for sysctl conf file value.
+sysctl_conf_file: "{{ '/etc/sysctl.d/99-sysctl.conf' if ansible_os_family == 'VMware Photon OS' else '/etc/sysctl.conf' }}"

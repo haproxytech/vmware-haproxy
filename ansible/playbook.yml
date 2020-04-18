@@ -15,7 +15,8 @@
 - hosts: all
   become: yes
   roles:
-    - role: cloudinit
-    - role: haproxy
-    - role: pki
-    - role: sysprep
+  - role: common
+  - role: cloudinit
+  - role: haproxy
+  - role: pki
+  - role: sysprep

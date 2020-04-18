@@ -1,0 +1,32 @@
+# Copyright (c) 2020 VMware, Inc. All Rights Reserved.
+# SPDX-License-Identifier: Apache-2.0
+---
+- import_tasks: photon.yml
+  when: ansible_os_family == "VMware Photon OS"
+
+- name: Ensure net.ipv4.ip_forward sysctl is present
+  sysctl:
+    name: net.ipv4.ip_forward
+    value: "1"
+    state: present
+    sysctl_set: yes
+    reload: yes
+    sysctl_file: "{{ sysctl_conf_file }}"
+
+- name: Ensure net.ipv6.conf.all.forwarding sysctl is present
+  sysctl:
+    name: net.ipv6.conf.all.forwarding
+    value: "1"
+    state: present
+    sysctl_set: yes
+    reload: yes
+    sysctl_file: "{{ sysctl_conf_file }}"
+
+- name: Ensure IPv6 is enabled
+  sysctl:
+    name: net.ipv6.conf.all.disable_ipv6
+    value: "0"
+    state: present
+    sysctl_set: yes
+    reload: yes
+    sysctl_file: "{{ sysctl_conf_file }}"

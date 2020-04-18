@@ -4,7 +4,7 @@
 # SPDX-License-Identifier: Apache-2.0
 
 ################################################################################
-# usage: image-ssh.sh BUILD_DIR [SSH_USER]
+# usage: image-ssh.sh BUILD_DIR
 #  This program uses SSH to connect to an image running locally in VMware
 #  Workstation or VMware Fusion.
 ################################################################################
@@ -14,7 +14,7 @@ set -o nounset
 set -o pipefail
 
 if [ "${#}" -lt "1" ]; then
-  echo "usage: ${0} BUILD_DIR [SSH_USER]" 1>&2
+  echo "usage: ${0} BUILD_DIR" 1>&2
   exit 1
 fi
 
@@ -30,8 +30,7 @@ export PATH="${VM_RUN_DIR}:${PATH}"
 VMX_FILE=$(/bin/ls "${1-}"/*.vmx)
 
 # Get the SSH user.
-SSH_USER="${SSH_USER:-${2-}}"
-SSH_USER="${SSH_USER:-capv}"
+SSH_USER="builder"
 
 # Get the VM's IP address.
 IP_ADDR="$(vmrun getGuestIPAddress "${VMX_FILE}")"

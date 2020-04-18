@@ -169,7 +169,7 @@ Illustrating the utility of haproxy as a load-balancer is best accomplished usin
 
 ## OVA
 
-In production the haproxy loadbalancer is deployed as an OVA.
+In production the HAProxy loadbalancer is deployed as an OVA.
 
 ### OVA Requirements
 
@@ -193,4 +193,4 @@ The above command build the OVA with Packer in _headless_ mode, meaning that VMw
 FOREGROUND=1 make build-ova
 ```
 
-Once the OVA is built, it should be located at `./output/capv-haproxy.ova` and be around `240MiB`.
+Once the OVA is built, it should be located at `./output/haproxy.ova` and be around `240MiB`.

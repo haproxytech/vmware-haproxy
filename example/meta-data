@@ -1,12 +1,16 @@
 cleanup-guestinfo:
 - userdata
-instance-id: haproxy-lb
-local-hostname: haproxy-lb.vm
+instance-id: haproxy
+local-hostname: haproxy.vm
 network:
   version: 2
   ethernets:
     nics:
       match:
         name: ens*
+      set-name: eth0
       dhcp4: yes
-      dhcp6: yes
+      dhcp6: no
+wait-on-network:
+  ipv4: yes
+  ipv6: no
