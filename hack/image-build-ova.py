@@ -169,7 +169,7 @@ _OVF_TEMPLATE = '''<?xml version='1.0' encoding='UTF-8'?>
     <Name>${ARTIFACT_ID}</Name>
     <AnnotationSection>
       <Info>A human-readable annotation</Info>
-      <Annotation>Cluster API vSphere HAProxy Load Balancer - https://github.com/kubernetes-sigs/cluster-api-provider-vsphere/tree/${VERSION}/hack/tools/haproxy</Annotation>
+      <Annotation>HAProxy for the Load Balancer API (${VERSION})</Annotation>
     </AnnotationSection>
     <OperatingSystemSection ovf:id="101" vmw:osType="other3xLinux64Guest">
       <Info>The operating system installed</Info>
@@ -524,13 +524,13 @@ EVALUATION LICENSE.  If You are licensing the Software for evaluation purposes, 
     </EulaSection>
     <ProductSection>
       <Info>Information about the installed software</Info>
-      <Product>CAPV HAProxy Load Balancer</Product>
+      <Product>HAProxy for the Load Balancer API ${VERSION}</Product>
       <Vendor>VMware Inc.</Vendor>
       <Version>${VERSION}</Version>
       <FullVersion>${VERSION}</FullVersion>
-      <ProductUrl>https://github.com/kubernetes-sigs/cluster-api-provider-vsphere/tree/${VERSION}/hack/tools/haproxy</ProductUrl>
+      <ProductUrl>https://vmware.com</ProductUrl>
       <VendorUrl>https://vmware.com</VendorUrl>
-      <Category>Cluster API Provider (CAPI)</Category>
+      <Category>Load Balancer API</Category>
       <Property ovf:userConfigurable="false" ovf:value="${BUILD_TIMESTAMP}" ovf:type="string" ovf:key="BUILD_TIMESTAMP"></Property>
       <Property ovf:userConfigurable="false" ovf:value="${BUILD_DATE}" ovf:type="string" ovf:key="BUILD_DATE"></Property>
       <Property ovf:userConfigurable="false" ovf:value="${ISO_URL}" ovf:type="string" ovf:key="ISO_URL"></Property>
