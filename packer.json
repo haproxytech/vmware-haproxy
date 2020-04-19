@@ -23,6 +23,7 @@
     "iso_checksum": "090f5c98b6b8406dbc3ad856aa1ed23bad1ce5b0",
     "iso_checksum_type": "sha1",
     "os_display_name": "VMware Photon OS 64-bit",
+    "output_directory": "./output/ova",
     "reenable_public_repos": "true",
     "remove_extra_repos": "false",
     "shutdown_command": "shutdown now",
@@ -40,7 +41,7 @@
       "name": "haproxy",
       "vm_name": "haproxy",
       "vmdk_name": "haproxy",
-      "output_directory": "./output",
+      "output_directory": "{{user `output_directory`}}",
       "type": "vmware-iso",
       "version": "{{user `vmx_version`}}",
       "cpus": 1,
@@ -91,7 +92,7 @@
   "post-processors": [
     {
       "type": "manifest",
-      "output": "./output/packer-manifest.json",
+      "output": "{{user `output_directory`}}/packer-manifest.json",
       "strip_path": true,
       "custom_data": {
         "build_timestamp": "{{user `build_timestamp`}}",
@@ -104,11 +105,11 @@
     },
     {
       "type": "shell-local",
-      "command": "./hack/image-build-ova.py --vmx {{user `vmx_version`}} ./output"
+      "command": "./hack/image-build-ova.py --vmx {{user `vmx_version`}} {{user `output_directory`}}"
     },
     {
       "type": "shell-local",
-      "command": "./hack/image-post-create-config.sh ./output"
+      "command": "./hack/image-post-create-config.sh {{user `output_directory`}}"
     }
   ]
 }
