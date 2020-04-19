@@ -193,4 +193,30 @@ The above command build the OVA with Packer in _headless_ mode, meaning that VMw
 FOREGROUND=1 make build-ova
 ```
 
-Once the OVA is built, it should be located at `./output/haproxy.ova` and be around `240MiB`.
+Once the OVA is built, it should be located at `./output/haproxy.ova` and be around `500MiB`.
+
+### Downloading the OVA
+
+A full list of the published HAProxy load balancer images for CAPV may be obtained with the following command:
+
+```shell
+gsutil ls gs://load-balancer-api/ova/release
+```
+
+To produce a list of URLs for released images (and their checksums), the following command may be used:
+
+```shell
+gsutil ls gs://load-balancer-api/ova/release/*/*.{ova,sha256} | sed 's~^gs://~http://storage.googleapis.com/~'
+```
+
+A list of unreleased images are also avaialble:
+
+```shell
+gsutil ls gs://load-balancer-api/ova/ci
+```
+
+And to get a list of URLs for unreleased images:
+
+```shell
+gsutil ls gs://load-balancer-api/ova/ci/*/*.{ova,sha256} | sed 's~^gs://~http://storage.googleapis.com/~'
+```
