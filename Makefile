@@ -23,14 +23,26 @@ help: ## Display this help
 # Initialize the version with the Git version.
 VERSION ?= $(shell git describe --always --dirty)
 
+# The output directory for produced assets.
+OUTPUT_DIR ?= ./output
+
 # DataPlane API version to build
 DATAPLANEAPI_REF ?= 0553265
+
+# The location of the DataPlane API binary.
+DATAPLANEAPI_BIN := $(OUTPUT_DIR)/dataplaneapi-$(DATAPLANEAPI_REF).linux_amd64
+
+# The locations of the DataPlane API specifications.
+DATAPLANEAPI_SWAGGER_JSON := $(OUTPUT_DIR)/dataplaneapi-$(DATAPLANEAPI_REF)-swagger.json
+DATAPLANEAPI_OPENAPI_JSON := $(OUTPUT_DIR)/dataplaneapi-$(DATAPLANEAPI_REF)-openapi.json
 
 
 ## --------------------------------------
 ## Packer flags
 ## --------------------------------------
 PACKER_FLAGS += -var='version=$(VERSION)'
+PACKER_FLAGS += -var='output_directory=$(OUTPUT_DIR)/ova'
+PACKER_FLAGS += -var='dataplaneapi_ref=0553265'
 
 # If FOREGROUND=1 then Packer will set headless to false, causing local builds
 # to build in the foreground, with a UI. This is very useful when debugging new
@@ -71,28 +83,44 @@ build-image: ## Builds the container image
 
 
 ## --------------------------------------
+## DataPlane API Binary
+## --------------------------------------
+.PHONY: build-api-bin
+build-api-bin: build-image
+build-api-bin: ## Builds the DataPlane API binary
+	@mkdir -p $(dir $(DATAPLANEAPI_BIN))
+	CONTAINER=$$(docker run -d --rm haproxy) && \
+	  docker cp $${CONTAINER}:/usr/local/bin/dataplaneapi $(DATAPLANEAPI_BIN) && \
+	  docker kill $${CONTAINER}
+	@echo $(DATAPLANEAPI_BIN)
+
+
+## --------------------------------------
 ## DataPlane API OpenAPI spec
 ## --------------------------------------
-.PHONY: build-spec
-build-spec: build-image
-build-spec: ## Builds the DataPlane API spec
-	docker run -d --rm --name haproxy -p 5556:5556 haproxy
-	while ! curl \
-	  --cacert example/ca.crt \
-	  --cert example/client.crt --key example/client.key \
-	  --user client:cert \
-	  "https://localhost:5556/v2/specification" >dataplane-api-$(DATAPLANEAPI_REF)-swagger.json; do \
-	  sleep 1; \
-	  done
-	docker kill haproxy
-	swagger2openapi "dataplane-api-$(DATAPLANEAPI_REF)-swagger.json" >"dataplane-api-$(DATAPLANEAPI_REF)-openapi.json"
-	rm -f "dataplane-api-$(DATAPLANEAPI_REF)-swagger.json"
+.PHONY: build-api-spec
+build-api-spec: build-image
+build-api-spec: ## Builds the DataPlane API spec
+	@mkdir -p $(dir $(DATAPLANEAPI_SWAGGER_JSON))
+	CONTAINER=$$(docker run -d --rm -p 5556:5556 haproxy) && \
+	  while ! curl \
+	    --cacert example/ca.crt \
+	    --cert example/client.crt --key example/client.key \
+	    --user client:cert \
+	    "https://localhost:5556/v2/specification" >$(DATAPLANEAPI_SWAGGER_JSON); do \
+	    sleep 1; \
+	  done && \
+	  docker kill $${CONTAINER}
+	$(MAKE) -C hack/images/swagger2openapi build
+	docker run --rm \
+	  -v $(abspath $(DATAPLANEAPI_SWAGGER_JSON)):/build/in.json:ro \
+	  swagger2openapi >"$(DATAPLANEAPI_OPENAPI_JSON)"
 
 
 ## --------------------------------------
 ## Clean
 ## --------------------------------------
 .PHONY: clean
-clean: ## Cleans all local image caches
-	rm -fr ./output
+clean: ## Cleans artifacts
+	rm -fr $(OUTPUT_DIR)
 
