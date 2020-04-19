@@ -4,7 +4,8 @@
 - name: Find existing repo files
   find:
     depth: 1
-    paths: /etc/yum.repos.d
+    paths:
+    - /etc/yum.repos.d
     patterns: '*.repo'
   register: repo_files
   when: disable_public_repos|bool
