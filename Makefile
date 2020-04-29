@@ -27,7 +27,7 @@ VERSION ?= $(shell git describe --always --dirty)
 OUTPUT_DIR ?= ./output
 
 # DataPlane API version to build
-DATAPLANEAPI_REF ?= 0553265
+DATAPLANEAPI_REF ?= v2.0.0
 
 # The location of the DataPlane API binary.
 DATAPLANEAPI_BIN := $(OUTPUT_DIR)/dataplaneapi-$(DATAPLANEAPI_REF).linux_amd64
@@ -42,7 +42,7 @@ DATAPLANEAPI_OPENAPI_JSON := $(OUTPUT_DIR)/dataplaneapi-$(DATAPLANEAPI_REF)-open
 ## --------------------------------------
 PACKER_FLAGS += -var='version=$(VERSION)'
 PACKER_FLAGS += -var='output_directory=$(OUTPUT_DIR)/ova'
-PACKER_FLAGS += -var='dataplaneapi_ref=0553265'
+PACKER_FLAGS += -var='dataplaneapi_ref=$(DATAPLANEAPI_REF)'
 
 # If FOREGROUND=1 then Packer will set headless to false, causing local builds
 # to build in the foreground, with a UI. This is very useful when debugging new
