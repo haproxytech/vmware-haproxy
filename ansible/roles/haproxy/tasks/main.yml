@@ -41,5 +41,5 @@
 - name: Update DataPlane API reload command
   replace:
     path: /etc/haproxy/haproxy.cfg
-    regexp: 'killall -SIGUSR2 haproxy'
+    regexp: 'kill -SIGUSR2 1'
     replace: '/usr/bin/systemctl reload haproxy'
