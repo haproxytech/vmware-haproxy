@@ -1,7 +1,7 @@
 {
   "variables": {
     "ansible_common_vars": "",
-    "ansible_extra_vars": "dataplane_api_url={{user `dataplane_api_url`}} guestinfo_datasource_ref={{user `guestinfo_datasource_ref`}} guestinfo_datasource_slug={{user `guestinfo_datasource_slug`}} guestinfo_datasource_url={{user `guestinfo_datasource_url`}} haproxy_rpm_url={{user `haproxy_rpm_url`}}",
+    "ansible_extra_vars": "dataplane_api_url={{user `dataplane_api_url`}} guestinfo_datasource_ref={{user `guestinfo_datasource_ref`}} guestinfo_datasource_slug={{user `guestinfo_datasource_slug`}} guestinfo_datasource_url={{user `guestinfo_datasource_url`}}",
     "build_name": "haproxy",
     "build_timestamp": "{{timestamp}}",
     "build_version": "{{user `build_name`}}-{{user `version`}}",
@@ -17,7 +17,6 @@
     "guestinfo_datasource_slug": "https://raw.githubusercontent.com/vmware/cloud-init-vmware-guestinfo",
     "guestinfo_datasource_url": "{{user `guestinfo_datasource_slug`}}/{{user `guestinfo_datasource_ref`}}/install.sh",
     "guest_os_type": "vmware-photon-64",
-    "haproxy_rpm_url": "https://storage.googleapis.com/load-balancer-api/haproxy/2.1.0/haproxy-2.1.0-1.ph3.x86_64.rpm",
     "headless": "true",
     "iso_url": "https://dl.bintray.com/vmware/photon/3.0/Rev2/iso/Update1/photon-minimal-3.0-a0f216d.iso",
     "iso_checksum": "090f5c98b6b8406dbc3ad856aa1ed23bad1ce5b0",

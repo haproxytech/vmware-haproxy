@@ -7,11 +7,6 @@
     dest: /usr/local/bin/dataplaneapi
     mode: "0755"
 
-- name: Install HAProxy
-  command: "rpm -ivh {{ haproxy_rpm_url }}"
-  args:
-    warn: no
-
 - name: Enable HAProxy service
   service:
     name: haproxy

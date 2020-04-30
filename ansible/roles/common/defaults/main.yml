@@ -5,6 +5,7 @@ common_photon_rpms:
 - conntrack-tools
 - distrib-compat
 - ebtables
+- haproxy
 - iputils
 - iproute2
 - jq

@@ -38,11 +38,7 @@ RUN chmod 0755 /usr/local/bin/dataplaneapi
 
 RUN tdnf install -y curl vim lsof pcre rpm shadow systemd iputils iproute2
 
-# The path to the HAProxy RPM.
-ARG HAPROXY_RPM_URI
-ENV HAPROXY_RPM_URI ${HAPROXY_RPM_URI:-http://pa-dbc1118.eng.vmware.com/ppadmavilasom/results/haproxy-2.1.0/haproxy-2.1.0-1.ph3.x86_64.rpm}
-
-RUN rpm -ivh ${HAPROXY_RPM_URI} && \
+RUN tdnf install -y haproxy && \
     useradd --system --home-dir=/var/lib/haproxy --user-group haproxy && \
     mkdir -p /var/lib/haproxy && \
     chown -R haproxy:haproxy /var/lib/haproxy
