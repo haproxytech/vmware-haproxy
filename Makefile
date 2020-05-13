@@ -36,6 +36,9 @@ DATAPLANEAPI_BIN := $(OUTPUT_DIR)/dataplaneapi-$(DATAPLANEAPI_REF).linux_amd64
 DATAPLANEAPI_SWAGGER_JSON := $(OUTPUT_DIR)/dataplaneapi-$(DATAPLANEAPI_REF)-swagger.json
 DATAPLANEAPI_OPENAPI_JSON := $(OUTPUT_DIR)/dataplaneapi-$(DATAPLANEAPI_REF)-openapi.json
 
+# Enable mTLS on the dataplane API
+DATAPLANEAPI_WITH_MTLS ?= false
+
 
 ## --------------------------------------
 ## Packer flags
@@ -79,7 +82,11 @@ verify: ## Verifies the packer config
 ## --------------------------------------
 .PHONY: build-image
 build-image: ## Builds the container image
+ifeq ($(DATAPLANEAPI_WITH_MTLS),true)
+	docker build --build-arg "DATAPLANEAPI_REF=$(DATAPLANEAPI_REF)" -f Dockerfile.mTLS -t haproxy .
+else
 	docker build --build-arg "DATAPLANEAPI_REF=$(DATAPLANEAPI_REF)" -t haproxy .
+endif
 
 
 ## --------------------------------------
