@@ -25,6 +25,7 @@
     "useradd --system --no-create-home --home-dir=/var/lib/haproxy --user-group haproxy",
     "mkdir -p /var/lib/haproxy && chown -R haproxy:haproxy /var/lib/haproxy",
     "systemctl disable docker.service && systemctl mask docker.service",
-    "systemctl enable sshd.service"
+    "systemctl enable sshd.service",
+    "echo '\n\n[DHCP]\nClientIdentifier=mac' >> /etc/systemd/network/99-dhcp-en.network"
   ]
 }

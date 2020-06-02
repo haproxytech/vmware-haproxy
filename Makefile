@@ -68,8 +68,13 @@ PACKER_FLAGS := $(PACKER_VAR_FILES) $(PACKER_FLAGS)
 ## --------------------------------------
 ## OVA
 ## --------------------------------------
+.PHONY: clean-ova
+clean-ova: ## Cleans the generated HAProxy load balancer OVA
+	rm -rf $(OUTPUT_DIR)/ova
+
 .PHONY: build-ova
 build-ova: ## Builds the HAProxy load balancer OVA
+build-ova: clean-ova
 	packer build $(PACKER_FLAGS) packer.json
 
 .PHONY: verify
@@ -130,4 +135,3 @@ build-api-spec: ## Builds the DataPlane API spec
 .PHONY: clean
 clean: ## Cleans artifacts
 	rm -fr $(OUTPUT_DIR)
-

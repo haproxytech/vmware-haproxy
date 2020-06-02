@@ -184,16 +184,18 @@ Building the OVA requires:
 To build the OVA please run the following the command:
 
 ```shell
+export PATH=/Applications/VMware\ Fusion.app/Contents/Library/:$PATH  ## add `vmware-vdiskmanager` to path
 make build-ova
 ```
 
 The above command build the OVA with Packer in _headless_ mode, meaning that VMware Fusion/Workstation will not display the virtual machine (VM) as it is being built. If the build process fails or times out, please use the following command to build the OVA in the foreground:
 
 ```shell
+export PATH=/Applications/VMware\ Fusion.app/Contents/Library/:$PATH  ## add `vmware-vdiskmanager` to path
 FOREGROUND=1 make build-ova
 ```
 
-Once the OVA is built, it should be located at `./output/haproxy.ova` and be around `500MiB`.
+Once the OVA is built, it should be located at `./output/ova/haproxy.ova` and be around `500MiB`.
 
 ### Downloading the OVA
 
