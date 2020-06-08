@@ -8,7 +8,7 @@
   register: distro
   changed_when: '"Nothing to do" not in distro.stderr'
   until: distro is not failed
-  retries: 3
+  retries: 50
 
   # When the linux package is upgraded on Photon, the current /lib/modules
   # folder is removed, causing future package installs to file if they involve
@@ -27,11 +27,11 @@
   command: tdnf install {{ photon_rpms }} -y
   register: baseline
   until: baseline is not failed
-  retries: 3
+  retries: 50
 
 - name: install extra RPMs
   command: tdnf install {{ extra_rpms }} -y
   when: extra_rpms != ""
   register: extrarpms
   until: extrarpms is not failed
-  retries: 3
+  retries: 50

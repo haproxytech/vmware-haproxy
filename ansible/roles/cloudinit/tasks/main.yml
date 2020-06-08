@@ -3,11 +3,17 @@
 ---
 - name: Install cloud-init packages
   command: tdnf install -y cloud-init cloud-utils python3-netifaces
+  register: cloudinit
+  until: cloudinit is not failed
+  retries: 50
 
 - name: Download cloud-init datasource for VMware Guestinfo
   get_url:
     url:  '{{ guestinfo_datasource_url }}'
     dest: /tmp/cloud-init-vmware.sh
+  register: cloudInitExec
+  until: cloudInitExec is not failed
+  retries: 50
 
 - name: Execute cloud-init-vmware.sh
   shell: bash -o errexit -o pipefail /tmp/cloud-init-vmware.sh
