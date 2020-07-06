@@ -13,15 +13,19 @@ ARG GOLANG_IMAGE=golang:1.14.1
 ################################################################################
 FROM ${GOLANG_IMAGE} as builder
 
+# The Git repo used to build the DataPlane API binary.
+ARG DATAPLANEAPI_URL
+ENV DATAPLANEAPI_URL ${DATAPLANEAPI_URL:-https://github.com/haproxytech/dataplaneapi.git}
+
 # The Git ref used to build the DataPlane API binary.
 ARG DATAPLANEAPI_REF
 ENV DATAPLANEAPI_REF ${DATAPLANEAPI_REF:-494f9b817842d9e28f7b75c4c32a59395794636c}
 
 WORKDIR /
 
-RUN git clone https://github.com/haproxytech/dataplaneapi.git && \
+RUN git clone "${DATAPLANEAPI_URL}" && \
     cd dataplaneapi && \
-    git checkout -b build-me ${DATAPLANEAPI_REF} && \
+    git checkout -b build-me "${DATAPLANEAPI_REF}" && \
     make build
 
 

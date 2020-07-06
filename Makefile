@@ -27,7 +27,10 @@ VERSION ?= $(shell git describe --always --dirty)
 OUTPUT_DIR ?= ./output
 
 # DataPlane API version to build
-DATAPLANEAPI_REF ?= v2.0.0
+DATAPLANEAPI_REF ?= v2.0.3-6-gc1aaee7
+
+# DataPlane API URL to build
+DATAPLANEAPI_URL ?= https://github.com/haproxytech/dataplaneapi
 
 # The location of the DataPlane API binary.
 DATAPLANEAPI_BIN := $(OUTPUT_DIR)/dataplaneapi-$(DATAPLANEAPI_REF).linux_amd64
@@ -88,9 +91,9 @@ verify: ## Verifies the packer config
 .PHONY: build-image
 build-image: ## Builds the container image
 ifeq ($(DATAPLANEAPI_WITH_MTLS),true)
-	docker build --build-arg "DATAPLANEAPI_REF=$(DATAPLANEAPI_REF)" -f Dockerfile.mTLS -t haproxy .
+	docker build --build-arg "DATAPLANEAPI_REF=$(DATAPLANEAPI_REF)" --build-arg "DATAPLANEAPI_URL=$(DATAPLANEAPI_URL)" -f Dockerfile.mTLS -t haproxy .
 else
-	docker build --build-arg "DATAPLANEAPI_REF=$(DATAPLANEAPI_REF)" -t haproxy .
+	docker build --build-arg "DATAPLANEAPI_REF=$(DATAPLANEAPI_REF)" --build-arg "DATAPLANEAPI_URL=$(DATAPLANEAPI_URL)" -t haproxy .
 endif
 
 
