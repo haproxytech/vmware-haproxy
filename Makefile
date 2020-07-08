@@ -27,7 +27,7 @@ VERSION ?= $(shell git describe --always --dirty)
 OUTPUT_DIR ?= ./output
 
 # DataPlane API version to build
-DATAPLANEAPI_REF ?= v2.0.3-6-gc1aaee7
+DATAPLANEAPI_REF ?= v2.0.3-9-ga285673
 
 # DataPlane API URL to build
 DATAPLANEAPI_URL ?= https://github.com/haproxytech/dataplaneapi

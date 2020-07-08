@@ -6,7 +6,7 @@
     "build_timestamp": "{{timestamp}}",
     "build_version": "{{user `build_name`}}-{{user `version`}}",
     "version": "",
-    "dataplane_api_url": "https://storage.googleapis.com/load-balancer-api/dataplaneapi/v2.0.3-6-gc1aaee7/dataplaneapi",
+    "dataplane_api_url": "https://storage.googleapis.com/load-balancer-api/dataplaneapi/v2.0.3-9-ga285673/dataplaneapi",
     "disable_public_repos": "false",
     "disk_type_id": "0",
     "distro_name": "photon",
