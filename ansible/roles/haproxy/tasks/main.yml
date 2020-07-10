@@ -7,11 +7,6 @@
     dest: /usr/local/bin/dataplaneapi
     mode: "0755"
 
-- name: Enable HAProxy service
-  service:
-    name: haproxy
-    enabled: yes
-
 - name: Create HAProxy service drop-in directory
   file:
     path: /etc/systemd/system/haproxy.service.d
@@ -50,3 +45,9 @@
     path: /etc/haproxy/haproxy.cfg
     regexp: '--log-level=debug'
     replace: '--log-level=warning'
+
+- name: Enable HAProxy service
+  systemd:
+    name: haproxy
+    enabled: yes
+    daemon_reload: yes
