@@ -31,3 +31,13 @@
     path: /etc/cloud/cloud.cfg.d/99-disable-networking-config.cfg
     state: absent
   when: ansible_os_family == "VMware Photon OS"
+
+- name: Patch the cloud-init Photon distro source
+  copy:
+    force: true
+    src: files/usr/lib/python3.7/site-packages/cloudinit/distros/photon.py
+    dest: /usr/lib/python3.7/site-packages/cloudinit/distros/photon.py
+    owner: root
+    group: root
+    mode: "0644"
+  when: ansible_os_family == "VMware Photon OS"
