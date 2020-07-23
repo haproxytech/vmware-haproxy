@@ -27,7 +27,7 @@ VERSION ?= $(shell git describe --always --dirty)
 OUTPUT_DIR ?= ./output
 
 # DataPlane API version to build
-DATAPLANEAPI_REF ?= v2.0.3-9-ga285673
+DATAPLANEAPI_REF ?= v2.1.0
 
 # DataPlane API URL to build
 DATAPLANEAPI_URL ?= https://github.com/haproxytech/dataplaneapi
@@ -122,14 +122,14 @@ build-api-spec: ## Builds the DataPlane API spec
 	    --cacert example/ca.crt \
 	    --cert example/client.crt --key example/client.key \
 	    --user client:cert \
-	    "https://localhost:5556/v2/specification" >$(DATAPLANEAPI_SWAGGER_JSON); do \
+	    "https://localhost:5556/v2/specification_openapiv3" >$(DATAPLANEAPI_OPENAPI_JSON); do \
 	    sleep 1; \
 	  done && \
 	  docker kill $${CONTAINER}
-	$(MAKE) -C hack/images/swagger2openapi build
-	docker run --rm \
-	  -v $(abspath $(DATAPLANEAPI_SWAGGER_JSON)):/build/in.json:ro \
-	  swagger2openapi >"$(DATAPLANEAPI_OPENAPI_JSON)"
+#	$(MAKE) -C hack/images/swagger2openapi build
+#	docker run --rm \
+#	  -v $(abspath $(DATAPLANEAPI_SWAGGER_JSON)):/build/in.json:ro \
+#	  swagger2openapi >"$(DATAPLANEAPI_OPENAPI_JSON)"
 
 
 ## --------------------------------------
