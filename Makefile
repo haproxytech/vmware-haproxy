@@ -36,7 +36,6 @@ DATAPLANEAPI_URL ?= https://github.com/haproxytech/dataplaneapi
 DATAPLANEAPI_BIN := $(OUTPUT_DIR)/dataplaneapi-$(DATAPLANEAPI_REF).linux_amd64
 
 # The locations of the DataPlane API specifications.
-DATAPLANEAPI_SWAGGER_JSON := $(OUTPUT_DIR)/dataplaneapi-$(DATAPLANEAPI_REF)-swagger.json
 DATAPLANEAPI_OPENAPI_JSON := $(OUTPUT_DIR)/dataplaneapi-$(DATAPLANEAPI_REF)-openapi.json
 
 # Enable mTLS on the dataplane API
@@ -116,7 +115,7 @@ build-api-bin: ## Builds the DataPlane API binary
 .PHONY: build-api-spec
 build-api-spec: build-image
 build-api-spec: ## Builds the DataPlane API spec
-	@mkdir -p $(dir $(DATAPLANEAPI_SWAGGER_JSON))
+	@mkdir -p $(dir $(DATAPLANEAPI_OPENAPI_JSON))
 	CONTAINER=$$(docker run -d --rm -p 5556:5556 haproxy) && \
 	  while ! curl \
 	    --cacert example/ca.crt \
@@ -126,11 +125,6 @@ build-api-spec: ## Builds the DataPlane API spec
 	    sleep 1; \
 	  done && \
 	  docker kill $${CONTAINER}
-#	$(MAKE) -C hack/images/swagger2openapi build
-#	docker run --rm \
-#	  -v $(abspath $(DATAPLANEAPI_SWAGGER_JSON)):/build/in.json:ro \
-#	  swagger2openapi >"$(DATAPLANEAPI_OPENAPI_JSON)"
-
 
 ## --------------------------------------
 ## Clean
