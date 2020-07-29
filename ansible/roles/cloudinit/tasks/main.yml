@@ -41,3 +41,105 @@
     group: root
     mode: "0644"
   when: ansible_os_family == "VMware Photon OS"
+
+- name: Add ovf-to-cloud-init service
+  copy:
+    src: files/etc/systemd/system/ovf-to-cloud-init.service
+    dest: /etc/systemd/system/ovf-to-cloud-init.service
+    owner: root
+    group: root
+    mode: "0644"
+
+- name: Add anyip-routes service
+  copy:
+    src: files/etc/systemd/system/anyip-routes.service
+    dest: /etc/systemd/system/anyip-routes.service
+    owner: root
+    group: root
+    mode: "0644"
+
+- name: Add net-postconfig service
+  copy:
+    src: files/etc/systemd/system/net-postconfig.service
+    dest: /etc/systemd/system/net-postconfig.service
+    owner: root
+    group: root
+    mode: "0644"
+
+- name: Add ovf-to-cloud-init conversion script
+  copy:
+    src: files/var/lib/vmware/ovf-to-cloud-init.sh
+    dest: /var/lib/vmware/ovf-to-cloud-init.sh
+    owner: root
+    group: root
+    mode: "0744"
+
+- name: Add cloud-init userdata template
+  copy:
+    src: files/var/lib/vmware/userdata.txt
+    dest: /var/lib/vmware/userdata.txt
+    owner: root
+    group: root
+    mode: "0444"
+
+- name: Add cloud-init userdata template
+  copy:
+    src: files/var/lib/vmware/metadata.txt
+    dest: /var/lib/vmware/metadata.txt
+    owner: root
+    group: root
+    mode: "0444"
+
+- name: Add cloud-init dscheck script
+  copy:
+    src: files/usr/bin/dscheck_VMwareGuestInfo.sh
+    dest: /usr/bin/dscheck_VMwareGuestInfo
+    force: true
+    owner: root
+    group: root
+    mode: "0744"
+
+- name: Add set-anyip-routes script
+  copy:
+    src: files/var/lib/vmware/set-anyip-routes.sh
+    dest: /var/lib/vmware/set-anyip-routes.sh
+    owner: root
+    group: root
+    mode: "0744"
+
+- name: Add del-anyip-routes script
+  copy:
+    src: files/var/lib/vmware/del-anyip-routes.sh
+    dest: /var/lib/vmware/del-anyip-routes.sh
+    owner: root
+    group: root
+    mode: "0744"
+
+- name: Add net-postconfig script
+  copy:
+    src: files/var/lib/vmware/net-postconfig.sh
+    dest: /var/lib/vmware/net-postconfig.sh
+    owner: root
+    group: root
+    mode: "0744"
+
+- name: Enable ovf-to-cloud-init service
+  service:
+    name: ovf-to-cloud-init
+    enabled: yes
+
+- name: Enable anyip-routes service
+  service:
+    name: anyip-routes
+    enabled: yes
+
+- name: Enable net-postconfig service
+  service:
+    name: net-postconfig
+    enabled: yes
+
+- name: Install ovf-rpctool
+  get_url:
+    url: '{{ ovf_rpctool_url }}'
+    dest: /usr/sbin/ovf-rpctool
+    mode: "0755"

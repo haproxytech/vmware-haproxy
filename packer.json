@@ -1,7 +1,7 @@
 {
   "variables": {
     "ansible_common_vars": "",
-    "ansible_extra_vars": "dataplane_api_url={{user `dataplane_api_url`}} guestinfo_datasource_ref={{user `guestinfo_datasource_ref`}} guestinfo_datasource_slug={{user `guestinfo_datasource_slug`}} guestinfo_datasource_url={{user `guestinfo_datasource_url`}}",
+    "ansible_extra_vars": "dataplane_api_url={{user `dataplane_api_url`}} guestinfo_datasource_ref={{user `guestinfo_datasource_ref`}} guestinfo_datasource_slug={{user `guestinfo_datasource_slug`}} guestinfo_datasource_url={{user `guestinfo_datasource_url`}} ovf_rpctool_url={{user `ovf_rpctool_url`}}",
     "build_name": "haproxy",
     "build_timestamp": "{{timestamp}}",
     "build_version": "{{user `build_name`}}-{{user `version`}}",
@@ -24,6 +24,7 @@
     "output_directory": "./output/ova",
     "reenable_public_repos": "true",
     "remove_extra_repos": "false",
+    "ovf_rpctool_url": "https://storage.googleapis.com/load-balancer-api/ovf-rpctool/v0.0.1/ovf-rpctool",
     "shutdown_command": "shutdown now",
     "skip_compaction": "false",
     "ssh_username": "builder",

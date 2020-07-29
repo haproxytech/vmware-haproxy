@@ -23,7 +23,7 @@ def main():
         description="Builds an OVA using the artifacts from a Packer build")
     parser.add_argument('--vmx',
                         dest='vmx_version',
-                        default='13',
+                        default='15',
                         help='The virtual hardware version')
     parser.add_argument(dest='build_dir',
                         nargs='?',
@@ -156,8 +156,14 @@ _OVF_TEMPLATE = '''<?xml version='1.0' encoding='UTF-8'?>
   </DiskSection>
   <NetworkSection>
     <Info>The list of logical networks</Info>
-    <Network ovf:name="nic0">
-      <Description>Please select a network</Description>
+    <Network ovf:name="nic-management">
+      <Description>Please select a network routable from Supervisor for HAProxy Management traffic</Description>
+    </Network>
+    <Network ovf:name="nic-workload">
+      <Description>Please select a backend Workload network for the Load Balancer</Description>
+    </Network>
+    <Network ovf:name="nic-frontend">
+      <Description>Optional: Select a client-facing Frontend network if different from Workload network</Description>
     </Network>
   </NetworkSection>
   <vmw:StorageGroupSection ovf:required="false" vmw:id="group1" vmw:name="vSAN Default Storage Policy">
@@ -175,7 +181,7 @@ _OVF_TEMPLATE = '''<?xml version='1.0' encoding='UTF-8'?>
       <Info>The operating system installed</Info>
       <Description>Other 3.x or later Linux (64-bit)</Description>
     </OperatingSystemSection>
-    <VirtualHardwareSection>
+    <VirtualHardwareSection ovf:transport="com.vmware.guestInfo">
       <Info>Virtual hardware requirements</Info>
       <System>
         <vssd:ElementName>Virtual Hardware Family</vssd:ElementName>
@@ -206,56 +212,55 @@ _OVF_TEMPLATE = '''<?xml version='1.0' encoding='UTF-8'?>
         <rasd:InstanceID>3</rasd:InstanceID>
         <rasd:ResourceSubType>lsilogic</rasd:ResourceSubType>
         <rasd:ResourceType>6</rasd:ResourceType>
-        <vmw:Config ovf:required="false" vmw:key="slotInfo.pciSlotNumber" vmw:value="160"/>
-      </Item>
-      <Item>
-        <rasd:Address>1</rasd:Address>
-        <rasd:Description>IDE Controller</rasd:Description>
-        <rasd:ElementName>IDE Controller 1</rasd:ElementName>
-        <rasd:InstanceID>4</rasd:InstanceID>
-        <rasd:ResourceType>5</rasd:ResourceType>
+        <vmw:Config ovf:required="false" vmw:key="slotInfo.pciSlotNumber" vmw:value="128"/>
       </Item>
       <Item>
         <rasd:AddressOnParent>0</rasd:AddressOnParent>
         <rasd:ElementName>Hard Disk 1</rasd:ElementName>
         <rasd:HostResource>ovf:/disk/vmdisk1</rasd:HostResource>
-        <rasd:InstanceID>5</rasd:InstanceID>
+        <rasd:InstanceID>4</rasd:InstanceID>
         <rasd:Parent>3</rasd:Parent>
         <rasd:ResourceType>17</rasd:ResourceType>
       </Item>
       <Item>
-        <rasd:AddressOnParent>0</rasd:AddressOnParent>
-        <rasd:AutomaticAllocation>false</rasd:AutomaticAllocation>
-        <rasd:ElementName>CD/DVD Drive 1</rasd:ElementName>
-        <rasd:InstanceID>6</rasd:InstanceID>
-        <rasd:Parent>4</rasd:Parent>
-        <rasd:ResourceSubType>vmware.cdrom.atapi</rasd:ResourceSubType>
-        <rasd:ResourceType>15</rasd:ResourceType>
-      </Item>
-      <Item>
-        <rasd:AddressOnParent>0</rasd:AddressOnParent>
-        <rasd:AutomaticAllocation>false</rasd:AutomaticAllocation>
-        <rasd:Description>Floppy Drive</rasd:Description>
-        <rasd:ElementName>Floppy Drive 1</rasd:ElementName>
-        <rasd:InstanceID>7</rasd:InstanceID>
-        <rasd:ResourceSubType>vmware.floppy.device</rasd:ResourceSubType>
-        <rasd:ResourceType>14</rasd:ResourceType>
-      </Item>
-      <Item>
-        <rasd:AddressOnParent>0</rasd:AddressOnParent>
+        <rasd:AddressOnParent>2</rasd:AddressOnParent>
         <rasd:AutomaticAllocation>true</rasd:AutomaticAllocation>
-        <rasd:Connection>nic0</rasd:Connection>
-        <rasd:ElementName>Network adapter 1</rasd:ElementName>
-        <rasd:InstanceID>8</rasd:InstanceID>
+        <rasd:Connection>nic-management</rasd:Connection>
+        <rasd:ElementName>Management Network</rasd:ElementName>
+        <rasd:InstanceID>5</rasd:InstanceID>
+        <rasd:ResourceSubType>VmxNet3</rasd:ResourceSubType>
+        <rasd:ResourceType>10</rasd:ResourceType>
+        <vmw:Config ovf:required="false" vmw:key="slotInfo.pciSlotNumber" vmw:value="160"/>
+        <vmw:Config ovf:required="false" vmw:key="connectable.allowGuestControl" vmw:value="true"/>
+        <vmw:Config ovf:required="false" vmw:key="wakeOnLanEnabled" vmw:value="false"/>
+      </Item>
+      <Item>
+        <rasd:AddressOnParent>3</rasd:AddressOnParent>
+        <rasd:AutomaticAllocation>true</rasd:AutomaticAllocation>
+        <rasd:Connection>nic-workload</rasd:Connection>
+        <rasd:ElementName>Workload Network</rasd:ElementName>
+        <rasd:InstanceID>6</rasd:InstanceID>
         <rasd:ResourceSubType>VmxNet3</rasd:ResourceSubType>
         <rasd:ResourceType>10</rasd:ResourceType>
         <vmw:Config ovf:required="false" vmw:key="slotInfo.pciSlotNumber" vmw:value="192"/>
         <vmw:Config ovf:required="false" vmw:key="connectable.allowGuestControl" vmw:value="true"/>
         <vmw:Config ovf:required="false" vmw:key="wakeOnLanEnabled" vmw:value="false"/>
       </Item>
+      <Item>
+        <rasd:AddressOnParent>4</rasd:AddressOnParent>
+        <rasd:AutomaticAllocation>true</rasd:AutomaticAllocation>
+        <rasd:Connection>nic-frontend</rasd:Connection>
+        <rasd:ElementName>Frontend Network</rasd:ElementName>
+        <rasd:InstanceID>7</rasd:InstanceID>
+        <rasd:ResourceSubType>VmxNet3</rasd:ResourceSubType>
+        <rasd:ResourceType>10</rasd:ResourceType>
+        <vmw:Config ovf:required="false" vmw:key="slotInfo.pciSlotNumber" vmw:value="224"/>
+        <vmw:Config ovf:required="false" vmw:key="connectable.allowGuestControl" vmw:value="true"/>
+        <vmw:Config ovf:required="false" vmw:key="wakeOnLanEnabled" vmw:value="false"/>
+      </Item>
       <Item ovf:required="false">
         <rasd:ElementName>Video card</rasd:ElementName>
-        <rasd:InstanceID>9</rasd:InstanceID>
+        <rasd:InstanceID>8</rasd:InstanceID>
         <rasd:ResourceType>24</rasd:ResourceType>
         <vmw:Config ovf:required="false" vmw:key="enable3DSupport" vmw:value="false"/>
         <vmw:Config ovf:required="false" vmw:key="graphicsMemorySizeInKB" vmw:value="262144"/>
@@ -536,6 +541,70 @@ EVALUATION LICENSE.  If You are licensing the Software for evaluation purposes, 
       <Property ovf:userConfigurable="false" ovf:value="${ISO_URL}" ovf:type="string" ovf:key="ISO_URL"></Property>
       <Property ovf:userConfigurable="false" ovf:value="${ISO_CHECKSUM}" ovf:type="string" ovf:key="ISO_CHECKSUM"></Property>
       <Property ovf:userConfigurable="false" ovf:value="${ISO_CHECKSUM_TYPE}" ovf:type="string" ovf:key="ISO_CHECKSUM_TYPE"></Property>
+    </ProductSection>
+    <ProductSection ovf:class="appliance" ovf:required="false">
+      <Info>Appliance Properties</Info>
+      <Category>1. Appliance Configuration</Category>
+      <Property ovf:key="root_pwd" ovf:password="true" ovf:type="string" ovf:userConfigurable="true" ovf:value="">
+        <Label>1.1. Root Password</Label>
+        <Description>The initial password of the root user. Subsequent changes of password should be performed in operating system. (6-128 characters)</Description>
+      </Property>
+      <Property ovf:key="permit_root_login" ovf:type="boolean" ovf:userConfigurable="true" ovf:value="true">
+        <Label>1.2. Permit Root Login</Label>
+        <Description>Specifies whether root user can log in using SSH.</Description>
+      </Property>
+      <Property ovf:key="ca_cert" ovf:qualifiers="MinLen(0),MaxLen(65535)" ovf:type="string" ovf:userConfigurable="true" ovf:value="">
+        <Label>1.3. TLS Certificate Authority Certificate (ca.crt) </Label>
+        <Description>Paste the content of the CA certificate from which keys will be generated. Leave blank for default</Description>
+      </Property>
+      <Property ovf:key="ca_cert_key" ovf:qualifiers="MinLen(0),MaxLen(65535)" ovf:type="string" ovf:userConfigurable="true" ovf:value="">
+        <Label>1.4. TLS Certificate Authority Private Key (ca.key) </Label>
+        <Description>Paste the content of the CA certificate private key file. Leave blank for default.</Description>
+      </Property>
+    </ProductSection>
+    <ProductSection ovf:class="network" ovf:required="false">
+      <Info>Management Networking Properties</Info>
+      <Category>2. Network Config</Category>
+      <Property ovf:key="ip0" ovf:type="string" ovf:userConfigurable="true">
+        <Label>2.1. Management IP (Static)</Label>
+        <Description>The IP address for the appliance on the Management Port Group in CIDR format (Eg. 1.2.3.4/24). This cannot be DHCP.</Description>
+      </Property>
+      <Property ovf:key="ip1" ovf:type="string" ovf:userConfigurable="true">
+        <Label>2.2. Workload IP</Label>
+        <Description>The IP address for the appliance on the Workload Port Group in CIDR format (Eg. 1.2.3.4/24). Leave blank if DHCP is desired.</Description>
+      </Property>
+      <Property ovf:key="workload_as_frontend" ovf:type="boolean" ovf:userConfigurable="true" ovf:value="true">
+        <Label>2.3. Select to use the Workload network as Frontend network (2-nic configuration)</Label>
+        <Description>If not selected, configuration of an explicit Frontend network is required</Description>
+      </Property>
+      <Property ovf:key="ip2" ovf:type="string" ovf:userConfigurable="true">
+        <Label>2.4. Frontend IP (Optional)</Label>
+        <Description>The IP address for the appliance on the Frontend Port Group in CIDR format (Eg. 1.2.3.4/24). Leave blank if DHCP is desired or if using Workload network.</Description>
+      </Property>
+      <Property ovf:key="default_gateway" ovf:type="string" ovf:userConfigurable="true">
+        <Label>2.5. Default Gateway</Label>
+        <Description>The default gateway address for this appliance</Description>
+      </Property>
+    </ProductSection>
+    <ProductSection ovf:class="loadbalance" ovf:required="false">
+      <Info>Load Balancer Properties</Info>
+      <Category>3. Load Balancing</Category>
+      <Property ovf:key="service_ip_range" ovf:type="string" ovf:userConfigurable="true" ovf:value="">
+        <Label>3.1. Load Balancer IP Ranges, comma-separated in CIDR format (Eg 1.2.3.4/28,5.6.7.8/28)</Label>
+        <Description>The IP ranges the load balancer will use for Kubernetes Services and Control Planes</Description>
+      </Property>
+      <Property ovf:key="dataplane_port" ovf:qualifiers="MinValue(1),MaxValue(65535)" ovf:type="int" ovf:userConfigurable="true" ovf:value="5556">
+        <Label>3.2. Dataplane API Management Port</Label>
+        <Description>Specifies the port on which the Dataplane API will be advertized on the Management Network.</Description>
+      </Property>
+      <Property ovf:key="haproxy_user" ovf:type="string" ovf:userConfigurable="true" ovf:value="">
+        <Label>3.3. HAProxy User ID</Label>
+        <Description>Specifies the user ID used to authenticate to the Dataplane API.</Description>
+      </Property>
+      <Property ovf:key="haproxy_pwd" ovf:password="true" ovf:type="string" ovf:userConfigurable="true" ovf:value="">
+        <Label>3.4. HAProxy Password</Label>
+        <Description>Specifies the password used to authenticate to the Dataplane API. (6-128 characters)</Description>
+      </Property>
     </ProductSection>
   </VirtualSystem>
 </Envelope>

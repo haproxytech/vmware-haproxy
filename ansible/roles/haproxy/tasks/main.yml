@@ -28,6 +28,14 @@
     group: root
     mode: "0644"
 
+- name: Create anyip configuration file
+  copy:
+    src: files/etc/haproxy/anyip.cfg
+    dest: /etc/haproxy/anyip.cfg
+    owner: root
+    group: root
+    mode: "0644"
+
 - name: Update DataPlane API reload command
   replace:
     path: /etc/haproxy/haproxy.cfg
@@ -51,3 +59,9 @@
     name: haproxy
     enabled: yes
     daemon_reload: yes
+
+- name: Remove default HAProxy user
+  replace:
+    path: /etc/haproxy/haproxy.cfg
+    regexp: '  user client insecure-password cert'
+    replace: ''

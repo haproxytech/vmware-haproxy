@@ -1,0 +1,6 @@
+network:
+    version: 2
+    ethernets:
+MGMT_CONFIG
+WORKLOAD_CONFIG
+FRONTEND_CONFIG

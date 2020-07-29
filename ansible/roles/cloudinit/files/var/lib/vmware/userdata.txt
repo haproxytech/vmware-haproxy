@@ -1,0 +1,14 @@
+## template: jinja
+#cloud-config
+chpasswd:
+  list:
+    - root:ROOT_PWD_FROM_OVFENV
+
+runcmd:
+    - sysctl -w net.ipv4.conf.all.rp_filter=0 net.ipv4.conf.default.rp_filter=0 net.ipv4.conf.eth0.rp_filter=0 net.ipv4.conf.eth1.rp_filter=0 net.ipv4.conf.eth2.rp_filter=0
+    - sed -i -e '/^PermitRootLogin/s/^.*$/PermitRootLogin PERMIT_ROOT_LOGIN/' /etc/ssh/sshd_config
+    - systemctl restart sshd
+    - systemctl restart systemd-networkd
+    - sed -i '/^userlist controller/a\  \user HAPROXY_USER insecure-password HAPROXY_PWD' /etc/haproxy/haproxy.cfg
+    - if CREATE_DEFAULT_CA; then new-ca.sh "$(ip -4 a show MANAGEMENT_NET_NAME | grep inet | cut -d ' ' -f 6 | cut -d '/' -f 1)" /etc/haproxy; fi
+    - new-cert.sh -1 /etc/haproxy/ca.crt -2 /etc/haproxy/ca.key -3 "127.0.0.1,{{ ds.meta_data.network.interfaces.by_ipv4.keys()|join(',') }}" -4 "localhost" "{{ ds.meta_data.hostname }}" /etc/haproxy 2>&1 | tee /var/log/vmware/new_cert.log
