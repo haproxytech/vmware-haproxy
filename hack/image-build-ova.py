@@ -580,16 +580,20 @@ EVALUATION LICENSE.  If You are licensing the Software for evaluation purposes, 
         <Label>2.1. Default Gateway</Label>
         <Description>The default gateway address for this appliance</Description>
       </Property>
+      <Property ovf:key="nameservers" ovf:type="string" ovf:userConfigurable="true" ovf:value="1.1.1.1, 1.0.0.1">
+        <Label>2.2. DNS</Label>
+        <Description>A comma-separated list of IP addresses for up to three DNS servers</Description>
+      </Property>
       <Property ovf:key="ip0" ovf:type="string" ovf:userConfigurable="true">
-        <Label>2.2. Management IP (Static)</Label>
+        <Label>2.3. Management IP (Static)</Label>
         <Description>The IP address for the appliance on the Management Port Group in CIDR format (Eg. ip/subnet mask bits). This cannot be DHCP.</Description>
       </Property>
       <Property ovf:key="ip1" ovf:type="string" ovf:userConfigurable="true">
-        <Label>2.3. Workload IP</Label>
+        <Label>2.4. Workload IP</Label>
         <Description>The IP address for the appliance on the Workload Port Group in CIDR format (Eg. ip/subnet mask bits). Leave blank if DHCP is desired. This IP must be outside of the Load Balancer IP Range</Description>
       </Property>
       <Property ovf:key="ip2" ovf:type="string" ovf:userConfigurable="true" ovf:configuration="frontend">
-        <Label>2.4. Frontend IP</Label>
+        <Label>2.5. Frontend IP</Label>
         <Description>(Optional) The IP address for the appliance on the Frontend Port Group in CIDR format (Eg. ip/subnet mask bits). Leave blank if DHCP is desired. This IP must be outside of the Load Balancer IP Range</Description>
       </Property>
     </ProductSection>

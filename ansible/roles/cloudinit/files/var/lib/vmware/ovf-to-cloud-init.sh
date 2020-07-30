@@ -129,11 +129,17 @@ getManagementNetworkConfig () {
     network=$(getNetworkForPCI "$management_pci")
     mac=$(getMacForNetwork "$network")
     ip=$(ovf-rpctool get.ovf "$management_ip_key")
-    gateway=$(ovf-rpctool get.ovf network.default_gateway)
     config="$(getNetworkInterfaceYamlConfig "id0" "$management_net_name" "$mac" "$ip")"
+    gateway=$(ovf-rpctool get.ovf network.default_gateway)
     if [ "$gateway" != "" ] && [ "$gateway" != "null" ]; then
         config="$config\n            gateway4: $gateway"
     fi
+    nameservers=$(ovf-rpctool get.ovf network.nameservers)
+    if [ "$nameservers" == "" ] || [ "$nameservers" == "null" ]; then
+        nameservers="1.1.1.1, 1.0.0.1"
+    fi
+    config="$config\n            nameservers:"
+    config="$config\n              addresses: [${nameservers}]"
     echo -e "$(escapeString "$config")"
 }
 
