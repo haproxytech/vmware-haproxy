@@ -156,16 +156,27 @@ _OVF_TEMPLATE = '''<?xml version='1.0' encoding='UTF-8'?>
   </DiskSection>
   <NetworkSection>
     <Info>The list of logical networks</Info>
-    <Network ovf:name="nic-management">
-      <Description>Please select a network routable from Supervisor for HAProxy Management traffic</Description>
+    <Network ovf:name="Management">
+      <Description>Please select the Management network the Supervisor cluster uses to program HAProxy</Description>
     </Network>
-    <Network ovf:name="nic-workload">
-      <Description>Please select a backend Workload network for the Load Balancer</Description>
+    <Network ovf:name="Workload">
+      <Description>Please select the Workload network routable to Supervisor and Guest cluster nodes</Description>
     </Network>
-    <Network ovf:name="nic-frontend">
-      <Description>Optional: Select a client-facing Frontend network if different from Workload network</Description>
+    <Network ovf:name="Frontend" ovf:configuration="frontend">
+      <Description>(Optional) Please select the client-facing network for frontend, load balanced virtual servers</Description>
     </Network>
   </NetworkSection>
+  <DeploymentOptionSection>
+    <Info>The list of deployment options</Info>
+    <Configuration ovf:id="default" ovf:default="true">
+      <Label ovf:msgid="config.default.label"/>
+      <Description ovf:msgid="config.default.description"/>
+    </Configuration>
+    <Configuration ovf:id="frontend">
+      <Label ovf:msgid="config.frontend.label"/>
+      <Description ovf:msgid="config.frontend.description"/>
+    </Configuration>
+  </DeploymentOptionSection>
   <vmw:StorageGroupSection ovf:required="false" vmw:id="group1" vmw:name="vSAN Default Storage Policy">
     <Info>Storage policy for group of disks</Info>
     <vmw:Description>The vSAN Default Storage Policy storage policy group</vmw:Description>
@@ -225,7 +236,7 @@ _OVF_TEMPLATE = '''<?xml version='1.0' encoding='UTF-8'?>
       <Item>
         <rasd:AddressOnParent>2</rasd:AddressOnParent>
         <rasd:AutomaticAllocation>true</rasd:AutomaticAllocation>
-        <rasd:Connection>nic-management</rasd:Connection>
+        <rasd:Connection>Management</rasd:Connection>
         <rasd:ElementName>Management Network</rasd:ElementName>
         <rasd:InstanceID>5</rasd:InstanceID>
         <rasd:ResourceSubType>VmxNet3</rasd:ResourceSubType>
@@ -237,7 +248,7 @@ _OVF_TEMPLATE = '''<?xml version='1.0' encoding='UTF-8'?>
       <Item>
         <rasd:AddressOnParent>3</rasd:AddressOnParent>
         <rasd:AutomaticAllocation>true</rasd:AutomaticAllocation>
-        <rasd:Connection>nic-workload</rasd:Connection>
+        <rasd:Connection>Workload</rasd:Connection>
         <rasd:ElementName>Workload Network</rasd:ElementName>
         <rasd:InstanceID>6</rasd:InstanceID>
         <rasd:ResourceSubType>VmxNet3</rasd:ResourceSubType>
@@ -246,10 +257,10 @@ _OVF_TEMPLATE = '''<?xml version='1.0' encoding='UTF-8'?>
         <vmw:Config ovf:required="false" vmw:key="connectable.allowGuestControl" vmw:value="true"/>
         <vmw:Config ovf:required="false" vmw:key="wakeOnLanEnabled" vmw:value="false"/>
       </Item>
-      <Item>
+      <Item ovf:configuration="frontend">
         <rasd:AddressOnParent>4</rasd:AddressOnParent>
         <rasd:AutomaticAllocation>true</rasd:AutomaticAllocation>
-        <rasd:Connection>nic-frontend</rasd:Connection>
+        <rasd:Connection>Frontend</rasd:Connection>
         <rasd:ElementName>Frontend Network</rasd:ElementName>
         <rasd:InstanceID>7</rasd:InstanceID>
         <rasd:ResourceSubType>VmxNet3</rasd:ResourceSubType>
@@ -555,35 +566,31 @@ EVALUATION LICENSE.  If You are licensing the Software for evaluation purposes, 
       </Property>
       <Property ovf:key="ca_cert" ovf:qualifiers="MinLen(0),MaxLen(65535)" ovf:type="string" ovf:userConfigurable="true" ovf:value="">
         <Label>1.3. TLS Certificate Authority Certificate (ca.crt) </Label>
-        <Description>Paste the content of the CA certificate from which keys will be generated. Leave blank for default</Description>
+        <Description>Paste the content of the CA certificate from which keys will be generated. Will be generated if blank</Description>
       </Property>
       <Property ovf:key="ca_cert_key" ovf:qualifiers="MinLen(0),MaxLen(65535)" ovf:type="string" ovf:userConfigurable="true" ovf:value="">
         <Label>1.4. TLS Certificate Authority Private Key (ca.key) </Label>
-        <Description>Paste the content of the CA certificate private key file. Leave blank for default.</Description>
+        <Description>Paste the content of the CA certificate private key file. Will be generated if blank</Description>
       </Property>
     </ProductSection>
     <ProductSection ovf:class="network" ovf:required="false">
       <Info>Management Networking Properties</Info>
       <Category>2. Network Config</Category>
+      <Property ovf:key="default_gateway" ovf:type="string" ovf:userConfigurable="true">
+        <Label>2.1. Default Gateway</Label>
+        <Description>The default gateway address for this appliance</Description>
+      </Property>
       <Property ovf:key="ip0" ovf:type="string" ovf:userConfigurable="true">
-        <Label>2.1. Management IP (Static)</Label>
-        <Description>The IP address for the appliance on the Management Port Group in CIDR format (Eg. 1.2.3.4/24). This cannot be DHCP.</Description>
+        <Label>2.2. Management IP (Static)</Label>
+        <Description>The IP address for the appliance on the Management Port Group in CIDR format (Eg. ip/subnet mask bits). This cannot be DHCP.</Description>
       </Property>
       <Property ovf:key="ip1" ovf:type="string" ovf:userConfigurable="true">
-        <Label>2.2. Workload IP</Label>
-        <Description>The IP address for the appliance on the Workload Port Group in CIDR format (Eg. 1.2.3.4/24). Leave blank if DHCP is desired.</Description>
+        <Label>2.3. Workload IP</Label>
+        <Description>The IP address for the appliance on the Workload Port Group in CIDR format (Eg. ip/subnet mask bits). Leave blank if DHCP is desired. This IP must be outside of the Load Balancer IP Range</Description>
       </Property>
-      <Property ovf:key="workload_as_frontend" ovf:type="boolean" ovf:userConfigurable="true" ovf:value="true">
-        <Label>2.3. Select to use the Workload network as Frontend network (2-nic configuration)</Label>
-        <Description>If not selected, configuration of an explicit Frontend network is required</Description>
-      </Property>
-      <Property ovf:key="ip2" ovf:type="string" ovf:userConfigurable="true">
-        <Label>2.4. Frontend IP (Optional)</Label>
-        <Description>The IP address for the appliance on the Frontend Port Group in CIDR format (Eg. 1.2.3.4/24). Leave blank if DHCP is desired or if using Workload network.</Description>
-      </Property>
-      <Property ovf:key="default_gateway" ovf:type="string" ovf:userConfigurable="true">
-        <Label>2.5. Default Gateway</Label>
-        <Description>The default gateway address for this appliance</Description>
+      <Property ovf:key="ip2" ovf:type="string" ovf:userConfigurable="true" ovf:configuration="frontend">
+        <Label>2.4. Frontend IP</Label>
+        <Description>(Optional) The IP address for the appliance on the Frontend Port Group in CIDR format (Eg. ip/subnet mask bits). Leave blank if DHCP is desired. This IP must be outside of the Load Balancer IP Range</Description>
       </Property>
     </ProductSection>
     <ProductSection ovf:class="loadbalance" ovf:required="false">
@@ -591,7 +598,7 @@ EVALUATION LICENSE.  If You are licensing the Software for evaluation purposes, 
       <Category>3. Load Balancing</Category>
       <Property ovf:key="service_ip_range" ovf:type="string" ovf:userConfigurable="true" ovf:value="">
         <Label>3.1. Load Balancer IP Ranges, comma-separated in CIDR format (Eg 1.2.3.4/28,5.6.7.8/28)</Label>
-        <Description>The IP ranges the load balancer will use for Kubernetes Services and Control Planes</Description>
+        <Description>The IP ranges the load balancer will use for Kubernetes Services and Control Planes. The Appliance will currently respond to ALL the IPs in these ranges whether they're assigned or not. As such, these ranges must not overlap with the IPs assigned for the appliance or any other VMs on the network.</Description>
       </Property>
       <Property ovf:key="dataplane_port" ovf:qualifiers="MinValue(1),MaxValue(65535)" ovf:type="int" ovf:userConfigurable="true" ovf:value="5556">
         <Label>3.2. Dataplane API Management Port</Label>
@@ -607,6 +614,12 @@ EVALUATION LICENSE.  If You are licensing the Software for evaluation purposes, 
       </Property>
     </ProductSection>
   </VirtualSystem>
+  <Strings>
+    <Msg ovf:msgid="config.default.label">Default</Msg>
+    <Msg ovf:msgid="config.default.description">Deploy the Appliance with 2 nics: a Management network (Supervisor -> HAProxy dataplane) and a single Workload network. Load-balanced IPs are assigned on the Workload network. NOTE: Deployment will ignore all "frontend" options</Msg>
+    <Msg ovf:msgid="config.frontend.label">Frontend Network</Msg>
+    <Msg ovf:msgid="config.frontend.description">Deploy the Appliance with 3 nics: a Management network (Supervisor -> HAProxy dataplane), a single Workload network and a dedicated Frontend network. Load-balanced IPs are assigned on the Frontend network</Msg>
+  </Strings>
 </Envelope>
 '''
 

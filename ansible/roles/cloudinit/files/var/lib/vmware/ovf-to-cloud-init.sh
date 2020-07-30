@@ -71,11 +71,6 @@ getPermitRootLogin () {
     fi
 }
 
-# returns "true" or "false"
-getWorkloadAsFrontend () {
-    ovf-rpctool get.ovf network.workload_as_frontend
-}
-
 # If the certificate is copy/pasted into OVF, \ns are turned into spaces so it needs to be formatted
 # Input value is a certificate file. It is modified in place
 # This should be idempotent
@@ -110,16 +105,18 @@ getNetworkInterfaceYamlConfig () {
 }
 
 # Given one of the PCI constants above, find the network associated with it
+# This will return a non-zero return code if the provided PCI constant cannot
+# be found on this host.
 getNetworkForPCI () {
 	for name in "eth0" "eth1" "eth2"; do
 		devPath=$(cd /sys/class/net/$name/device; /bin/pwd)
 		pci=$(echo "$devPath" | cut -d '/' -f 6)
 		if [ "$pci" == "$1" ]; then
 			echo "$name"
-			exit 0
+			return 0
 		fi
 	done
-	exit 1
+	return 1
 }
 
 # Given a network, find the mac address associated with it
@@ -149,12 +146,14 @@ getWorkloadNetworkConfig () {
 }
 
 # Writes out the config for the frontend network
-# Note that this is conditional on the frontend network being different to the workload
+# Note that this is conditional on there being a third network device that is
+# the device connected to the frontend network.
+# If there is no third device, then this function returns gracefully with a
+# successful return code.
 getFrontendNetworkConfig () {
-    if [ "$(getWorkloadAsFrontend)" == "true" ] || [ "$(getWorkloadAsFrontend)" == "True" ]; then
-        exit 0
+    if ! network="$(getNetworkForPCI "$frontend_pci")"; then
+        return 0
     fi
-    network=$(getNetworkForPCI "$frontend_pci")
     mac=$(getMacForNetwork "$network")
     ip=$(ovf-rpctool get.ovf "$frontend_ip_key")
     echo -e "$(escapeString "$(getNetworkInterfaceYamlConfig "id2" "$frontend_net_name" "$mac" "$ip")")"
@@ -234,9 +233,7 @@ disableDefaultRoute () {
 # Write network postconfig actions to the script run by the net-postconfig service
 writeNetPostConfig () {
     disableDefaultRoute "$workload_ip_key" "$workload_net_name"
-    if [ "$(getWorkloadAsFrontend)" == "true" ]; then
-        echo 'ip link set eth2 down' >> /var/lib/vmware/net-postconfig.sh
-    else
+    if getNetworkForPCI "$frontend_pci"; then
         disableDefaultRoute "$frontend_ip_key" "$frontend_net_name"
     fi
 }
