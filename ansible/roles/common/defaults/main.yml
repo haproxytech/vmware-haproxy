@@ -25,6 +25,7 @@ common_photon_rpms:
 - tar
 - unzip
 - vim
+- haveged
 
 disable_public_repos: false
 extra_rpms: ""

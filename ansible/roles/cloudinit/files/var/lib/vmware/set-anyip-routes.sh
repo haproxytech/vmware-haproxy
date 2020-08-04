@@ -1,4 +1,8 @@
 #!/bin/bash
+
+# Copyright (c) 2020 VMware, Inc. All Rights Reserved.
+# SPDX-License-Identifier: Apache-2.0
+
 set -x
 
 # Simple script that reads the CIDRs from /etc/haproxy/anyip.cfg and sets up anyip routes
