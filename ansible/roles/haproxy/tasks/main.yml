@@ -36,6 +36,16 @@
     group: root
     mode: "0644"
 
+# The choice of 40000 maximum, concurrent connections was decided as a
+# result of performance testing using Weathervane on a deployed HAProxy
+# appliance with 2 cores and 2 GiB of memory, the default resource
+# allocation for the appliance.
+- name: Update HAProxy maxconn to 40000
+  replace:
+    path: /etc/haproxy/haproxy.cfg
+    regexp: '^(\s+)maxconn(\s+)\d+'
+    replace: '\1maxconn\240000'
+
 - name: Update DataPlane API reload command
   replace:
     path: /etc/haproxy/haproxy.cfg
