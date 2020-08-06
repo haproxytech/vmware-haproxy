@@ -127,6 +127,19 @@ build-api-spec: ## Builds the DataPlane API spec
 	  docker kill $${CONTAINER}
 
 ## --------------------------------------
+## Testing
+## --------------------------------------
+.PHONY: test-anyiproutectl
+test-anyiproutectl: build-image
+test-anyiproutectl: ## Run anyiproutectl tests
+	hack/test-route-programs.sh -a
+
+.PHONY: test-routetablectl
+test-routetablectl: build-image
+test-routetablectl: ## Run routetablectl tests
+	hack/test-route-programs.sh -r
+
+## --------------------------------------
 ## Clean
 ## --------------------------------------
 .PHONY: clean

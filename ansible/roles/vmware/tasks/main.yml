@@ -1,0 +1,60 @@
+# Copyright (c) 2020 VMware, Inc. All Rights Reserved.
+# SPDX-License-Identifier: Apache-2.0
+---
+- name: Create anyip-routes service configuration file
+  copy:
+    src: files/etc/vmware/anyip-routes.cfg
+    dest: /etc/vmware/anyip-routes.cfg
+    owner: root
+    group: root
+    mode: "0644"
+
+- name: Create anyiproutectl script
+  copy:
+    src: files/var/lib/vmware/anyiproutectl.sh
+    dest: /var/lib/vmware/anyiproutectl.sh
+    owner: root
+    group: root
+    mode: "0744"
+
+- name: Create anyip-routes service
+  copy:
+    src: files/etc/systemd/system/anyip-routes.service
+    dest: /etc/systemd/system/anyip-routes.service
+    owner: root
+    group: root
+    mode: "0644"
+
+- name: Enable anyip-routes service
+  service:
+    name: anyip-routes
+    enabled: yes
+
+- name: Create route-table service configuration file
+  copy:
+    src: files/etc/vmware/route-tables.cfg
+    dest: /etc/vmware/route-tables.cfg
+    owner: root
+    group: root
+    mode: "0644"
+
+- name: Create routetablectl script
+  copy:
+    src: files/var/lib/vmware/routetablectl.sh
+    dest: /var/lib/vmware/routetablectl.sh
+    owner: root
+    group: root
+    mode: "0744"
+
+- name: Create route-tables service
+  copy:
+    src: files/etc/systemd/system/route-tables.service
+    dest: /etc/systemd/system/route-tables.service
+    owner: root
+    group: root
+    mode: "0644"
+
+- name: Enable route-tables service
+  service:
+    name: route-tables
+    enabled: yes

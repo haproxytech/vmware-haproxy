@@ -6,6 +6,9 @@
 set -e
 set -x
 
+# The path to the postconfig script.
+postconfig_sh=/var/lib/vmware/net-postconfig.sh
+
 # These PCI slots are hard-coded in the OVF config
 # This is the reliable way of determining which network is which
 management_pci="0000:03:00.0" # 160
@@ -13,9 +16,12 @@ workload_pci="0000:0b:00.0" # 192
 frontend_pci="0000:13:00.0" # 224
 
 # These keys are hardcoded to match the data from OVF config
-management_ip_key="network.ip0"
-workload_ip_key="network.ip1"
-frontend_ip_key="network.ip2"
+management_ip_key="network.management_ip"
+workload_ip_key="network.workload_ip"
+frontend_ip_key="network.frontend_ip"
+management_gw_key="network.management_gateway"
+workload_gw_key="network.workload_gateway"
+frontend_gw_key="network.frontend_gateway"
 
 # These are the display names for the nics
 management_net_name="mgmt"
@@ -134,7 +140,7 @@ getManagementNetworkConfig () {
     mac=$(getMacForNetwork "$network")
     ip=$(ovf-rpctool get.ovf "$management_ip_key")
     config="$(getNetworkInterfaceYamlConfig "id0" "$management_net_name" "$mac" "$ip")"
-    gateway=$(ovf-rpctool get.ovf network.default_gateway)
+    gateway=$(ovf-rpctool get.ovf "$management_gw_key")
     if [ "$gateway" != "" ] && [ "$gateway" != "null" ]; then
         config="$config\n            gateway4: $gateway"
     fi
@@ -225,7 +231,7 @@ writeCAfiles () {
 writeAnyipConfig () {
     cidrs=$(ovf-rpctool get.ovf "loadbalance.service_ip_range")
     if [ "$cidrs" != "" ]; then
-        echo -e "${cidrs//,/\\n}" >> /etc/haproxy/anyip.cfg
+        echo -e "${cidrs//,/\\n}" >>"/etc/vmware/anyip-routes.cfg"
     fi
 }
 
@@ -236,15 +242,38 @@ writeAnyipConfig () {
 disableDefaultRoute () {
     ip=$(ovf-rpctool get.ovf "$1")
     if [ "$ip" == "" ] || [ "$ip" == "null" ]; then
-        echo "ip route del \$(ip route list | grep -E \"default.*$2.*dhcp\" | cut -d ' ' -f 1-5)" >> /var/lib/vmware/net-postconfig.sh
+        echo "ip route del \$(ip route list | grep -E \"default.*$2.*dhcp\" | cut -d ' ' -f 1-5)" >>"${postconfig_sh}"
+    fi
+}
+
+# Appends an entry to the route-table service's config file if a gateway was
+# specified for this network.
+# Input values:
+# - 1 Table ID
+# - 2 Table Name
+# - 3 PCI Number
+# - 4 IP Key
+# - 5 Gateway Key
+writeRouteTableConfig() {
+    gateway=$(ovf-rpctool get.ovf "${5}")
+    if [ "${gateway}" == "" ] || [ "${gateway}" == "null" ]; then
+        return 0
+    fi
+    network=$(getNetworkForPCI "${3}")
+    mac=$(getMacForNetwork "$network")
+    ip=$(ovf-rpctool get.ovf "${4}")
+    if [ "$ip" != "" ] && [ "$ip" != "null" ]; then
+        echo "${1},${2},${mac},${ip},${gateway}" >>"/etc/vmware/route-tables.cfg"
     fi
 }
 
 # Write network postconfig actions to the script run by the net-postconfig service
 writeNetPostConfig () {
     disableDefaultRoute "$workload_ip_key" "$workload_net_name"
+    writeRouteTableConfig 2 workload "${workload_pci}" "${workload_ip_key}" "${workload_gw_key}"
     if getNetworkForPCI "$frontend_pci"; then
         disableDefaultRoute "$frontend_ip_key" "$frontend_net_name"
+        writeRouteTableConfig 3 frontend "${frontend_pci}" "${frontend_ip_key}" "${frontend_gw_key}"
     fi
 }
 
@@ -253,4 +282,5 @@ publishUserdata
 publishMetadata
 writeCAfiles
 writeAnyipConfig
+writeRouteTableConfig
 writeNetPostConfig

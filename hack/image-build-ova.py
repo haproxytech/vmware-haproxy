@@ -576,25 +576,33 @@ EVALUATION LICENSE.  If You are licensing the Software for evaluation purposes, 
     <ProductSection ovf:class="network" ovf:required="false">
       <Info>Management Networking Properties</Info>
       <Category>2. Network Config</Category>
-      <Property ovf:key="default_gateway" ovf:type="string" ovf:userConfigurable="true">
-        <Label>2.1. Default Gateway</Label>
-        <Description>The default gateway address for this appliance</Description>
-      </Property>
       <Property ovf:key="nameservers" ovf:type="string" ovf:userConfigurable="true" ovf:value="1.1.1.1, 1.0.0.1">
-        <Label>2.2. DNS</Label>
+        <Label>2.1. DNS</Label>
         <Description>A comma-separated list of IP addresses for up to three DNS servers</Description>
       </Property>
-      <Property ovf:key="ip0" ovf:type="string" ovf:userConfigurable="true">
-        <Label>2.3. Management IP (Static)</Label>
-        <Description>The IP address for the appliance on the Management Port Group in CIDR format (Eg. ip/subnet mask bits). This cannot be DHCP.</Description>
+      <Property ovf:key="management_ip" ovf:type="string" ovf:userConfigurable="true">
+        <Label>2.2. Management IP</Label>
+        <Description>The static IP address for the appliance on the Management Port Group in CIDR format (Eg. ip/subnet mask bits). This cannot be DHCP.</Description>
       </Property>
-      <Property ovf:key="ip1" ovf:type="string" ovf:userConfigurable="true">
+      <Property ovf:key="management_gateway" ovf:type="string" ovf:userConfigurable="true">
+        <Label>2.3. Management Gateway</Label>
+        <Description>The gateway address for the workload network. This is also the default gateway for the appliance.</Description>
+      </Property>
+      <Property ovf:key="workload_ip" ovf:type="string" ovf:userConfigurable="true">
         <Label>2.4. Workload IP</Label>
-        <Description>The IP address for the appliance on the Workload Port Group in CIDR format (Eg. ip/subnet mask bits). Leave blank if DHCP is desired. This IP must be outside of the Load Balancer IP Range</Description>
+        <Description>The static IP address for the appliance on the Workload Port Group in CIDR format (Eg. ip/subnet mask bits). This IP must be outside of the Load Balancer IP Range</Description>
       </Property>
-      <Property ovf:key="ip2" ovf:type="string" ovf:userConfigurable="true" ovf:configuration="frontend">
-        <Label>2.5. Frontend IP</Label>
-        <Description>(Optional) The IP address for the appliance on the Frontend Port Group in CIDR format (Eg. ip/subnet mask bits). Leave blank if DHCP is desired. This IP must be outside of the Load Balancer IP Range</Description>
+      <Property ovf:key="workload_gateway" ovf:type="string" ovf:userConfigurable="true">
+        <Label>2.5. Workload Gateway</Label>
+        <Description>The gateway address for the workload network</Description>
+      </Property>
+      <Property ovf:key="frontend_ip" ovf:type="string" ovf:userConfigurable="true" ovf:configuration="frontend">
+        <Label>2.6. Frontend IP</Label>
+        <Description>(Optional) The static IP address for the appliance on the Frontend Port Group in CIDR format (Eg. ip/subnet mask bits). This IP must be outside of the Load Balancer IP Range</Description>
+      </Property>
+      <Property ovf:key="frontend_gateway" ovf:type="string" ovf:userConfigurable="true" ovf:configuration="frontend">
+        <Label>2.7. Frontend Gateway</Label>
+        <Description>(Optional) The gateway address for the frontend network</Description>
       </Property>
     </ProductSection>
     <ProductSection ovf:class="loadbalance" ovf:required="false">

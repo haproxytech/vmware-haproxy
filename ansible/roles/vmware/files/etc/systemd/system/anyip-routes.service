@@ -1,0 +1,28 @@
+# Creates Any IP routes for each network CIDR defined in
+# in /etc/vmware/anyip-routes.cfg.
+
+[Unit]
+Description=anyip-routes.service
+
+# This service *must* run after cloud-init has completed and networking is
+# online, but before HAProxy has started.
+After=cloud-final.service route-tables.service systemd-networkd.service
+Before=haproxy.service
+
+[Install]
+WantedBy=multi-user.target
+
+[Service]
+Type=oneshot
+TimeoutSec=0
+RemainAfterExit=yes
+WorkingDirectory=/var/lib/vmware
+
+# Create the log directory.
+ExecStartPre=/bin/mkdir -p /var/log/vmware
+
+# Define the Any IP routes.
+ExecStart=/bin/sh -c '/var/lib/vmware/anyiproutectl.sh -f 2>&1 | tee -a /var/log/vmware/anyip-routes.log'
+
+# Remove the Any IP routes.
+ExecStop=/bin/sh -c '/var/lib/vmware/anyiproutectl.sh -d 2>&1 | tee -a /var/log/vmware/anyip-routes.log'

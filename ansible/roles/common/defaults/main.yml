@@ -6,6 +6,7 @@ common_photon_rpms:
 - distrib-compat
 - ebtables
 - haproxy
+- inotify-tools
 - iputils
 - iproute2
 - jq

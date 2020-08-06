@@ -28,14 +28,6 @@
     group: root
     mode: "0644"
 
-- name: Create anyip configuration file
-  copy:
-    src: files/etc/haproxy/anyip.cfg
-    dest: /etc/haproxy/anyip.cfg
-    owner: root
-    group: root
-    mode: "0644"
-
 # The choice of 40000 maximum, concurrent connections was decided as a
 # result of performance testing using Weathervane on a deployed HAProxy
 # appliance with 2 cores and 2 GiB of memory, the default resource

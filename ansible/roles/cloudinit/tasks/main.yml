@@ -40,14 +40,6 @@
     group: root
     mode: "0644"
 
-- name: Add anyip-routes service
-  copy:
-    src: files/etc/systemd/system/anyip-routes.service
-    dest: /etc/systemd/system/anyip-routes.service
-    owner: root
-    group: root
-    mode: "0644"
-
 - name: Add net-postconfig service
   copy:
     src: files/etc/systemd/system/net-postconfig.service
@@ -89,22 +81,6 @@
     group: root
     mode: "0744"
 
-- name: Add set-anyip-routes script
-  copy:
-    src: files/var/lib/vmware/set-anyip-routes.sh
-    dest: /var/lib/vmware/set-anyip-routes.sh
-    owner: root
-    group: root
-    mode: "0744"
-
-- name: Add del-anyip-routes script
-  copy:
-    src: files/var/lib/vmware/del-anyip-routes.sh
-    dest: /var/lib/vmware/del-anyip-routes.sh
-    owner: root
-    group: root
-    mode: "0744"
-
 - name: Add net-postconfig script
   copy:
     src: files/var/lib/vmware/net-postconfig.sh
@@ -124,11 +100,6 @@
 - name: Enable ovf-to-cloud-init service
   service:
     name: ovf-to-cloud-init
-    enabled: yes
-
-- name: Enable anyip-routes service
-  service:
-    name: anyip-routes
     enabled: yes
 
 - name: Enable net-postconfig service
