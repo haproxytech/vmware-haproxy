@@ -1,6 +1,22 @@
 # Copyright (c) 2020 VMware, Inc. All Rights Reserved.
 # SPDX-License-Identifier: Apache-2.0
 ---
+- name: Create /etc/vmware
+  file:
+    path: /etc/vmware
+    owner: root
+    group: root
+    mode: "0755"
+    state: directory
+
+- name: Create /var/lib/vmware
+  file:
+    path: /var/lib/vmware
+    owner: root
+    group: root
+    mode: "0755"
+    state: directory
+
 - name: Create anyip-routes service configuration file
   copy:
     src: files/etc/vmware/anyip-routes.cfg
