@@ -16,17 +16,32 @@
 - name: Ensure net.ipv6.conf.all.forwarding sysctl is present
   sysctl:
     name: net.ipv6.conf.all.forwarding
+    value: "0"
+    state: present
+    sysctl_set: yes
+    reload: yes
+    sysctl_file: "{{ sysctl_conf_file }}"
+
+- name: Ensure IPv6 is disabled for all interfaces
+  sysctl:
+    name: net.ipv6.conf.all.disable_ipv6
     value: "1"
     state: present
     sysctl_set: yes
     reload: yes
     sysctl_file: "{{ sysctl_conf_file }}"
 
-- name: Ensure IPv6 is enabled
+- name: Ensure IPv6 is disabled as the default
   sysctl:
-    name: net.ipv6.conf.all.disable_ipv6
-    value: "0"
+    name: net.ipv6.conf.default.disable_ipv6
+    value: "1"
     state: present
     sysctl_set: yes
     reload: yes
     sysctl_file: "{{ sysctl_conf_file }}"
+
+- name: Bind SSH only to IPv4
+  replace:
+    path: /etc/ssh/sshd_config
+    regexp: '^.*?AddressFamily.*$'
+    replace: 'AddressFamily inet'
