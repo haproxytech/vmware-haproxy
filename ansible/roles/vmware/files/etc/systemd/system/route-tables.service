@@ -13,9 +13,8 @@ Before=anyip-routes.service haproxy.service
 WantedBy=multi-user.target
 
 [Service]
-Type=oneshot
+Type=simple
 TimeoutSec=0
-RemainAfterExit=yes
 WorkingDirectory=/var/lib/vmware
 
 # Create the log directory.

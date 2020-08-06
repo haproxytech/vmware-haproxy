@@ -42,9 +42,11 @@
     mode: "0644"
 
 - name: Enable anyip-routes service
-  service:
+  systemd:
     name: anyip-routes
     enabled: yes
+    daemon_reload: yes
+    state: stopped
 
 - name: Create route-table service configuration file
   copy:
@@ -71,6 +73,8 @@
     mode: "0644"
 
 - name: Enable route-tables service
-  service:
+  systemd:
     name: route-tables
     enabled: yes
+    daemon_reload: yes
+    state: stopped
