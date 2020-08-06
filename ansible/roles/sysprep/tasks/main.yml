@@ -28,17 +28,13 @@
   - { path: /etc/hostname, state: absent, mode: "0644" }
   - { path: /etc/hostname, state: touch,  mode: "0644" }
 
-- name: Reset IPv4 iptables
-  replace:
-    path: /etc/systemd/scripts/ip4save
-    regexp: 'INPUT DROP'
-    replace: 'INPUT ACCEPT'
-
-- name: Reset IPv6 iptables
-  replace:
-    path: /etc/systemd/scripts/ip6save
-    regexp: 'INPUT DROP'
-    replace: 'INPUT ACCEPT'
+# Only the virtual services are listening on non-management interfaces, so
+# there is no need for a stateful firewall. Not to mention that iptables
+# reliance on conntrack contributes to performance degredation.
+- name: Disable IP tables
+  service:
+    name: iptables
+    enabled: no
 
 - name: Remove the kickstart log
   file:
