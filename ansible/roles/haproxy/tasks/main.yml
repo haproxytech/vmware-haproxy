@@ -7,6 +7,16 @@
     dest: /usr/local/bin/dataplaneapi
     mode: "0755"
 
+- name: Download HAProxy 2.2.2
+  get_url:
+    url: '{{ haproxy_rpm_url }}'
+    dest: /root/haproxy-2.2.2.rpm
+  when: haproxy_rpm_url != ''
+
+- name: Install HAProxy 2.2.2
+  command: sh -c 'rpm --upgrade -vh /root/haproxy-2.2.2.rpm || true'
+  when: haproxy_rpm_url != ''
+
 - name: Create HAProxy service drop-in directory
   file:
     path: /etc/systemd/system/haproxy.service.d
