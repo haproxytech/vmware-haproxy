@@ -6,6 +6,30 @@
     "age": -1
   },
   "disk": "/dev/sda",
+  "partitions": [
+    {
+      "mountpoint": "/boot",
+      "size": 512,
+      "filesystem": "ext4"
+    },
+    {
+      "mountpoint": "/",
+      "size": 0,
+      "filesystem": "ext4",
+      "lvm": {
+        "vg_name": "root_vg",
+        "lv_name": "root"
+      }
+    },
+    {
+      "size": 2048,
+      "filesystem": "swap",
+      "lvm": {
+        "vg_name": "swap_vg",
+        "lv_name": "swap1"
+      }
+    }
+  ],
   "packages": [
     "bash",
     "linux",
