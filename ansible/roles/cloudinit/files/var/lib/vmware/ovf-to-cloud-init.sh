@@ -81,6 +81,25 @@ getPermitRootLogin () {
     fi
 }
 
+bindSSHToManagementIP() {
+    sed -i -e 's/#ListenAddress 0.0.0.0/ListenAddress '"${1}"'/' /etc/ssh/sshd_config
+}
+
+bindDataPlaneAPIToManagementIP() {
+    sed -i -e 's/--tls-host=0.0.0.0/--tls-host='"${1}"'/' /etc/haproxy/haproxy.cfg
+}
+
+bindServicesToManagementIP() {
+    ip=$(ovf-rpctool get.ovf "$management_ip_key")
+    if [ "$ip" == "" ] || [ "$ip" == "null" ]; then
+        echo "management IP must be static" 1>&2
+        return 1
+    else
+        bindSSHToManagementIP "${ip}"
+        bindDataPlaneAPIToManagementIP "${ip}"
+    fi
+}
+
 # If the certificate is copy/pasted into OVF, \ns are turned into spaces so it needs to be formatted
 # Input value is a certificate file. It is modified in place
 # This should be idempotent
@@ -280,6 +299,7 @@ writeNetPostConfig () {
 checkForExistingUserdata
 publishUserdata
 publishMetadata
+bindServicesToManagementIP
 writeCAfiles
 writeAnyipConfig
 writeRouteTableConfig
