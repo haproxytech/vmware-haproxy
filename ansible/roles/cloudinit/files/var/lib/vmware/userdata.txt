@@ -5,7 +5,6 @@ chpasswd:
     - root:ROOT_PWD_FROM_OVFENV
 
 runcmd:
-    - sysctl -w net.ipv4.conf.all.rp_filter=0 net.ipv4.conf.default.rp_filter=0 net.ipv4.conf.eth0.rp_filter=0 net.ipv4.conf.eth1.rp_filter=0 net.ipv4.conf.eth2.rp_filter=0
     - sed -i -e '/^PermitRootLogin/s/^.*$/PermitRootLogin PERMIT_ROOT_LOGIN/' /etc/ssh/sshd_config
     - systemctl restart sshd
     - systemctl restart systemd-networkd
