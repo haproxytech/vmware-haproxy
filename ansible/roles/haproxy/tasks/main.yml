@@ -46,7 +46,7 @@
   replace:
     path: /etc/haproxy/haproxy.cfg
     regexp: '^(\s+)maxconn(\s+)\d+'
-    replace: '\1maxconn\260000'
+    replace: '\1maxconn\g<2>60000'
 
 - name: Update DataPlane API reload command
   replace:
