@@ -104,7 +104,7 @@ formatCertificate () {
 # - static IP (CIDR notation)
 # If static IP is not defined, DHCP is assumed
 getNetworkInterfaceYamlConfig () {
-    cfg1="        $1:\n            set-name: $2\n            match:\n                macaddress: $3\n            wakeonlan: true\n"
+    cfg1="        $1:\n            match:\n                macaddress: $3\n            wakeonlan: true\n"
     cfg2=""
     if [ "$4" == "" ] || [ "$4" == "null" ]; then
         cfg2="            dhcp4: true"
