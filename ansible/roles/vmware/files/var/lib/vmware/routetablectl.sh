@@ -144,7 +144,7 @@ function up_routes() {
 # Watches the config file and acts on any detected changes.
 function watch_routes() {
   echo2 "watching configuration file for changes"
-  while inotifywait -e modify "${CONFIG_FILE}"; do up_routes; done
+  inotifywait -m -e modify "${CONFIG_FILE}" | while read -r; do up_routes; done
 }
 
 ################################################################################

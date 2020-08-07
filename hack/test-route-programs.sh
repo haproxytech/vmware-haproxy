@@ -138,7 +138,7 @@ function stop_haproxy() {
 function on_exit() {
   stop_haproxy
   net_down
-  [ -z "${TEMP_CONFIG:-}" ] || rm -f "${TEMP_CONFIG}"
+  [ -z "${TEMP_TEST:-}" ] || rm -f "${TEMP_TEST}"
 }
 trap on_exit EXIT
 
@@ -197,104 +197,166 @@ function test_prereqs() {
 function test_anyiproutectl() {
   test_prereqs
 
-  # Run anyiproutectl.sh with an empty config file and expect no errors.
-  docker exec -it "${HAPROXY_CONTAINER}" /var/lib/vmware/anyiproutectl.sh up
-
   # Get the AnyIP ranges for the Docker networks.
   DOCKER_NET_1_ANYIP_CIDR_1="${DOCKER_NET_1_CIDR%.*/*}.128/25"
   DOCKER_NET_2_ANYIP_CIDR_1="${DOCKER_NET_2_CIDR%.*/*}.128/25"
   DOCKER_NET_3_ANYIP_CIDR_1="${DOCKER_NET_3_CIDR%.*/*}.128/25"
-
-  # Create the config file.
-  TEMP_CONFIG=".$(date "+%s")"
-  cat <<EOF >"${TEMP_CONFIG}"
-${DOCKER_NET_1_ANYIP_CIDR_1}
-${DOCKER_NET_2_ANYIP_CIDR_1}
-EOF
-
-  # Copy the config file to the container.
-  docker cp "${TEMP_CONFIG}" "${HAPROXY_CONTAINER}":/etc/vmware/anyip-routes.cfg
-
-  # Run the program with a populated config file and expect no errors.
-  docker exec "${HAPROXY_CONTAINER}" /var/lib/vmware/anyiproutectl.sh up
-
-  # Run the program with a populated config file again and expect no errors.
-  docker exec "${HAPROXY_CONTAINER}" /var/lib/vmware/anyiproutectl.sh up
 
   # Define a random IP address in each of the AnyIP ranges.
   ANYIP_IP_1="${DOCKER_NET_1_ANYIP_CIDR_1%.*/*}.$(shuf -i 128-254 -n 1)"
   ANYIP_IP_2="${DOCKER_NET_2_ANYIP_CIDR_1%.*/*}.$(shuf -i 128-254 -n 1)"
   ANYIP_IP_3="${DOCKER_NET_3_ANYIP_CIDR_1%.*/*}.$(shuf -i 128-254 -n 1)"
 
-  # Ping each of the IP addresses and expect no errors.
-  docker exec "${HAPROXY_CONTAINER}" ping -c2 "${ANYIP_IP_1}"
-  docker exec "${HAPROXY_CONTAINER}" ping -c2 "${ANYIP_IP_2}"
+  # Create the temp test file.
+  TEMP_TEST=".$(date "+%s")"
+  cat <<EOF >"${TEMP_TEST}"
+#!/bin/bash
 
-  # Disable the AnyIP routes and expect no errors.
-  docker exec "${HAPROXY_CONTAINER}" /var/lib/vmware/anyiproutectl.sh down
+set -o errexit
+set -o nounset
+set -o pipefail
 
-  # Disable the AnyIP routes again and expect no errors.
-  docker exec "${HAPROXY_CONTAINER}" /var/lib/vmware/anyiproutectl.sh down
+# Ping each of the IP addresses and expect an error for each one.
+! ping -c2 -W1 "${ANYIP_IP_1}"
+! ping -c2 -W1 "${ANYIP_IP_2}"
+! ping -c2 -W1 "${ANYIP_IP_3}"
 
-  # Ping each of the IP addresses and expect an error for each one.
-  ! docker exec "${HAPROXY_CONTAINER}" ping -c2 -W1 "${ANYIP_IP_1}" || return "${?}"
-  ! docker exec "${HAPROXY_CONTAINER}" ping -c2 -W1 "${ANYIP_IP_2}" || return "${?}"
+# Run the program with an empty config file and expect no errors.
+/var/lib/vmware/anyiproutectl.sh up
 
-  # Watch the config file for changes.
-  docker exec --env "DOCKER_NET_3_ANYIP_CIDR_1=${DOCKER_NET_3_ANYIP_CIDR_1}" \
-    -t "${HAPROXY_CONTAINER}" \
-    sh -c '( /var/lib/vmware/anyiproutectl.sh watch & ) && sleep 2 && echo "${DOCKER_NET_3_ANYIP_CIDR_1}" >>/etc/vmware/anyip-routes.cfg && sleep 2'
+# Create the config file.
+cat <<EOD >/etc/vmware/anyip-routes.cfg
+${DOCKER_NET_1_ANYIP_CIDR_1}
+${DOCKER_NET_2_ANYIP_CIDR_1}
+EOD
 
-  # Ping each the new IP address and expect no errors.
-  docker exec "${HAPROXY_CONTAINER}" ping -c2 "${ANYIP_IP_3}"
+# Run the program with a populated config file and expect no errors.
+/var/lib/vmware/anyiproutectl.sh up
+
+# Run the program with a populated config file again and expect no errors.
+/var/lib/vmware/anyiproutectl.sh up
+
+# Ping each of the IP addresses and expect no errors.
+ping -c2 "${ANYIP_IP_1}"
+ping -c2 "${ANYIP_IP_2}"
+
+# Disable the routes and expect no errors.
+/var/lib/vmware/anyiproutectl.sh down
+
+# Disable the AnyIP routes again and expect no errors.
+/var/lib/vmware/anyiproutectl.sh down
+
+# Ping each of the IP addresses and expect an error for each one.
+! ping -c2 -W1 "${ANYIP_IP_1}"
+! ping -c2 -W1 "${ANYIP_IP_2}"
+
+# Watch the config file for changes.
+/var/lib/vmware/anyiproutectl.sh watch &
+
+# Sleep for a moment to give the watch a chance to take.
+sleep 1
+
+# Update the config file.
+echo "${DOCKER_NET_3_ANYIP_CIDR_1}" >>/etc/vmware/anyip-routes.cfg
+
+# Ping the new IP address and expect no errors.
+ping -c2 "${ANYIP_IP_3}"
+EOF
+
+  # Copy the test script to the container.
+  docker cp "${TEMP_TEST}" "${HAPROXY_CONTAINER}":/test.sh
+
+  # Execute the test script inside the container.
+  docker exec "${HAPROXY_CONTAINER}" bash /test.sh
 }
 
 function test_routetablectl() {
   test_prereqs
 
-  # Run routetablectl.sh with an empty config file and expect no errors.
-  docker exec -it "${HAPROXY_CONTAINER}" /var/lib/vmware/routetablectl.sh up
-
   # Create the config file.
   #   <TableID>,<TableName>,<MACAddress>,<NetworkCIDR>,<Gateway4>
-  TEMP_CONFIG=".$(date "+%s")"
-  cat <<EOF >"${TEMP_CONFIG}"
+  TEMP_TEST=".$(date "+%s")"
+  cat <<EOF >"${TEMP_TEST}"
 2,frontend,${DOCKER_NET_2_MAC},${DOCKER_NET_2_CIDR},${DOCKER_NET_2_GATEWAY}
 3,workload,${DOCKER_NET_3_MAC},${DOCKER_NET_3_CIDR},${DOCKER_NET_3_GATEWAY}
 EOF
 
-  # Copy the config file to the container.
-  docker cp "${TEMP_CONFIG}" "${HAPROXY_CONTAINER}":/etc/vmware/route-tables.cfg
+  cat <<EOF >"${TEMP_TEST}"
+#!/bin/bash
 
-  # Run the program with a populated config file and expect no errors.
-  docker exec "${HAPROXY_CONTAINER}" /var/lib/vmware/routetablectl.sh up
+set -o errexit
+set -o nounset
+set -o pipefail
 
-  # Assert the file /etc/iproute2/rt_tables has the expected tables in it.
-  docker exec "${HAPROXY_CONTAINER}" grep $'2\trtctl_frontend' /etc/iproute2/rt_tables
-  docker exec "${HAPROXY_CONTAINER}" grep $'3\trtctl_workload' /etc/iproute2/rt_tables
+# Run the program with an empty config file and expect no errors.
+/var/lib/vmware/routetablectl.sh up
 
-  # Assert the expected IP rules exist.
-  docker exec "${HAPROXY_CONTAINER}" sh -c 'ip rule | grep rtctl_frontend'
-  docker exec "${HAPROXY_CONTAINER}" sh -c 'ip rule | grep rtctl_workload'
+# Create the config file.
+#   <TableID>,<TableName>,<MACAddress>,<NetworkCIDR>,<Gateway4>
+cat <<EOD >/etc/vmware/route-tables.cfg
+2,frontend,${DOCKER_NET_2_MAC},${DOCKER_NET_2_CIDR},${DOCKER_NET_2_GATEWAY}
+3,workload,${DOCKER_NET_3_MAC},${DOCKER_NET_3_CIDR},${DOCKER_NET_3_GATEWAY}
+EOD
 
-  # Assert the expected default gateways exist.
-  docker exec "${HAPROXY_CONTAINER}" sh -c 'ip route show table rtctl_frontend | grep default'
-  docker exec "${HAPROXY_CONTAINER}" sh -c 'ip route show table rtctl_workload | grep default'
+# Run the program with a populated config file and expect no errors.
+/var/lib/vmware/routetablectl.sh up
 
-  # Disable the routes and expect no errors.
-  docker exec "${HAPROXY_CONTAINER}" /var/lib/vmware/routetablectl.sh down
+# Assert the file /etc/iproute2/rt_tables has the expected tables in it.
+grep $'2\trtctl_frontend' /etc/iproute2/rt_tables
+grep $'3\trtctl_workload' /etc/iproute2/rt_tables
 
-  # Assert the file /etc/iproute2/rt_tables DOES NOT have the expected tables in it.
-  ! docker exec "${HAPROXY_CONTAINER}" grep $'2\trtctl_frontend' /etc/iproute2/rt_tables || return "${?}"
-  ! docker exec "${HAPROXY_CONTAINER}" grep $'3\trtctl_workload' /etc/iproute2/rt_tables || return "${?}"
+# Assert the expected IP rules exist.
+ip rule | grep rtctl_frontend
+ip rule | grep rtctl_workload
 
-  # Assert the expected IP rules  DO NOT exist.
-  ! docker exec "${HAPROXY_CONTAINER}" sh -c 'ip rule | grep rtctl_frontend' || return "${?}"
-  ! docker exec "${HAPROXY_CONTAINER}" sh -c 'ip rule | grep rtctl_workload' || return "${?}"
+# Assert the expected default gateways exist.
+ip route show table rtctl_frontend | grep default
+ip route show table rtctl_workload | grep default
 
-  # Assert the expected default gateways DO NOT exist.
-  ! docker exec "${HAPROXY_CONTAINER}" sh -c 'ip route show table rtctl_frontend | grep default' || return "${?}"
-  ! docker exec "${HAPROXY_CONTAINER}" sh -c 'ip route show table rtctl_workload | grep default' || return "${?}"
+# Disable the routes and expect no errors.
+/var/lib/vmware/routetablectl.sh down
+
+# Assert the file /etc/iproute2/rt_tables DOES NOT have the expected tables in it.
+! grep $'2\trtctl_frontend' /etc/iproute2/rt_tables
+! grep $'3\trtctl_workload' /etc/iproute2/rt_tables
+
+# Assert the expected IP rules DO NOT exist.
+! ip rule | grep rtctl_frontend'
+! ip rule | grep rtctl_workload'
+
+# Assert the expected default gateways DO NOT exist.
+! ip route show table rtctl_frontend 2>/dev/null
+! ip route show table rtctl_workload 2>/dev/null
+
+# Truncate the config file.
+printf '' >/etc/vmware/route-tables.cfg
+
+# Watch the config file for changes.
+/var/lib/vmware/routetablectl.sh watch &
+
+# Sleep for a moment to give the watch a chance to take.
+sleep 1
+
+# Update the config file and assert the appropriate actions occur.
+echo "2,frontend,${DOCKER_NET_2_MAC},${DOCKER_NET_2_CIDR},${DOCKER_NET_2_GATEWAY}" >/etc/vmware/route-tables.cfg
+sleep 2
+grep $'2\trtctl_frontend' /etc/iproute2/rt_tables
+ip rule | grep rtctl_frontend
+ip route show table rtctl_frontend | grep default
+
+# Update the config file and assert the appropriate actions occur.
+echo "3,workload,${DOCKER_NET_3_MAC},${DOCKER_NET_3_CIDR},${DOCKER_NET_3_GATEWAY}" >/etc/vmware/route-tables.cfg
+sleep 2
+grep $'3\trtctl_workload' /etc/iproute2/rt_tables
+ip rule | grep rtctl_workload
+ip route show table rtctl_workload | grep default
+EOF
+
+  # Copy the test script to the container.
+  docker cp "${TEMP_TEST}" "${HAPROXY_CONTAINER}":/test.sh
+
+  # Execute the test script inside the container.
+  docker exec "${HAPROXY_CONTAINER}" bash /test.sh
 }
 
 ################################################################################
