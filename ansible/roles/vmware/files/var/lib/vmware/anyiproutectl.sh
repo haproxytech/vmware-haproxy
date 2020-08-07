@@ -117,7 +117,7 @@ while getopts ":h" opt; do
 done
 shift $((OPTIND - 1))
 
-CMD="${1}"
+CMD="${1-}"
 case "${CMD}" in
   up)
     up_routes

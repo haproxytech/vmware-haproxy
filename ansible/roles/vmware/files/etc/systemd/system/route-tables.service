@@ -5,8 +5,9 @@
 Description=route-tables.service
 
 # This service *must* run after cloud-init has completed and networking is
-# online, but before HAProxy has started.
-After=cloud-final.service systemd-networkd.service
+# online (which it is by the time cloud-final has executed), but before HAProxy
+# has started.
+After=cloud-final.service
 Before=anyip-routes.service haproxy.service
 
 [Install]
@@ -19,6 +20,9 @@ WorkingDirectory=/var/lib/vmware
 
 # Create the log directory.
 ExecStartPre=/bin/mkdir -p /var/log/vmware
+
+# Run the up command once.
+ExecStartPre=/bin/sh -c '/var/lib/vmware/routetablectl.sh up 2>&1 | tee -a /var/log/vmware/route-tables.log'
 
 # Watch the config file for changes.
 ExecStart=/bin/sh -c '/var/lib/vmware/routetablectl.sh watch 2>&1 | tee -a /var/log/vmware/route-tables.log'
