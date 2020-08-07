@@ -1,0 +1,19 @@
+[Unit]
+Description=dataplaneapi.service
+
+# This service should run after haproxy.service
+After=haproxy.service
+
+[Install]
+WantedBy=multi-user.target
+
+[Service]
+TimeoutSec=0
+Restart=Always
+WorkingDirectory=/etc/haproxy
+Slice=dataplaneapi.slice
+
+ExecStart=/usr/local/bin/dataplaneapi --log-level=warning --scheme=https --haproxy-bin=/usr/sbin/haproxy \
+    --config-file=/etc/haproxy/haproxy.cfg --reload-cmd=/usr/bin/systemctl reload haproxy --reload-delay=5 \
+    --tls-host=0.0.0.0 --tls-port=5556 --tls-certificate=/etc/haproxy/server.crt --tls-key=/etc/haproxy/server.key \
+    --userlist=controller --update-map-files --log-to=stdout

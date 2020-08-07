@@ -30,6 +30,22 @@
     group: root
     mode: "0644"
 
+- name: Create Dataplane API systemd file
+  copy:
+    src: files/etc/systemd/system/dataplaneapi.service
+    dest: /etc/systemd/system/dataplaneapi.service
+    owner: root
+    group: root
+    mode: "0644"
+
+- name: Create Dataplane API systemd slice file
+  copy:
+    src: files/etc/systemd/system/dataplaneapi.slice
+    dest: /etc/systemd/system/dataplaneapi.slice
+    owner: root
+    group: root
+    mode: "0644"
+
 - name: Create HAProxy configuration file
   copy:
     src: files/etc/haproxy/haproxy.cfg
@@ -69,6 +85,12 @@
 - name: Enable HAProxy service
   systemd:
     name: haproxy
+    enabled: yes
+    daemon_reload: yes
+
+- name: Enable Dataplane API service
+  systemd:
+    name: dataplaneapi
     enabled: yes
     daemon_reload: yes
 
