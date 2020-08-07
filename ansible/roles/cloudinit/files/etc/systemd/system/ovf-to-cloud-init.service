@@ -16,7 +16,7 @@ RemainAfterExit=yes
 TimeoutSec=0
 WorkingDirectory=/var/lib/vmware
 
-# Create the VMware directories exist
+# Ensure the VMware directories exist
 ExecStartPre=/bin/mkdir -p /etc/vmware /var/log/vmware
 
 # The script that transforms the OVF data into cloud-init data and sets it in guest info
