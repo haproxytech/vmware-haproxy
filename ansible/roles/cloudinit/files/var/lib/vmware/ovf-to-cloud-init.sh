@@ -104,6 +104,15 @@ bindServicesToManagementIP() {
     fi
 }
 
+setDataPlaneAPIPort() {
+    port=$(ovf-rpctool get.ovf "loadbalance.dataplane_port")
+    if [ "${port}" == "" ] || [ "${port}" == "0" ] || [ "${port}" == "null" ]; then
+        port=5556
+    fi
+    sed -i -e 's/--tls-port=5556/--tls-port='"${port}"'/' /etc/haproxy/haproxy.cfg
+    echo "Data Plane API port set to ${port}"
+}
+
 # If the certificate is copy/pasted into OVF, \ns are turned into spaces so it needs to be formatted
 # Input value is a certificate file. It is modified in place
 # This should be idempotent
@@ -304,6 +313,7 @@ checkForExistingUserdata
 publishUserdata
 publishMetadata
 bindServicesToManagementIP
+setDataPlaneAPIPort
 writeCAfiles
 writeAnyipConfig
 writeRouteTableConfig
