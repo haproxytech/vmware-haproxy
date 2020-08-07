@@ -20,8 +20,8 @@ WorkingDirectory=/var/lib/vmware
 # Create the log directory.
 ExecStartPre=/bin/mkdir -p /var/log/vmware
 
-# Define the Any IP routes.
-ExecStart=/bin/sh -c '/var/lib/vmware/anyiproutectl.sh -f 2>&1 | tee -a /var/log/vmware/anyip-routes.log'
+# Watch the config file for changes.
+ExecStart=/bin/sh -c '/var/lib/vmware/anyiproutectl.sh watch 2>&1 | tee -a /var/log/vmware/anyip-routes.log'
 
 # Remove the Any IP routes.
-ExecStop=/bin/sh -c '/var/lib/vmware/anyiproutectl.sh -d 2>&1 | tee -a /var/log/vmware/anyip-routes.log'
+ExecStop=/bin/sh -c '/var/lib/vmware/anyiproutectl.sh down 2>&1 | tee -a /var/log/vmware/anyip-routes.log'

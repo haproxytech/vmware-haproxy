@@ -16,14 +16,16 @@ set -o pipefail
 ##                                  usage
 ################################################################################
 
-USAGE="usage: ${0} [FLAGS]
+USAGE="usage: ${0} [FLAGS] CMD
   Controls custom route tables on this host
+
+CMD
+  up      enables the routes
+  down    disables the routes
+  watch   runs in the foreground while watching the config file for changes
 
 FLAGS
   -h    show this help and exit
-  -u    enable custom route tables
-  -f    behaves like -u, but runs in blocking mode while watching config file
-  -d    disable custom route tables
 
 Globals
   CONFIG_FILE
@@ -139,11 +141,10 @@ function up_routes() {
   done <"${CONFIG_FILE}"
 }
 
-# Starts monitoring the config file and calls the provided function
-# when there are changes to the config file.
-function start_monitoring() {
-  echo2 "start monitoring ${1}"
-  inotifywait -m -e modify "${CONFIG_FILE}" | eval "${1}"
+# Watches the config file and acts on any detected changes.
+function watch_routes() {
+  echo2 "watching configuration file for changes"
+  while inotifywait -e modify "${CONFIG_FILE}"; do up_routes; done
 }
 
 ################################################################################
@@ -151,22 +152,10 @@ function start_monitoring() {
 ################################################################################
 
 # Parse the command-line arguments.
-while getopts ":hudf" opt; do
+while getopts ":h" opt; do
   case ${opt} in
     h)
       fatal "${USAGE}"
-      ;;
-    u)
-      up_routes
-      exit "${?}"
-      ;;
-    f)
-      start_monitoring up_routes
-      exit "${?}"
-      ;;
-    d)
-      down_routes
-      exit "${?}"
       ;;
     \?)
       fatal "invalid option: -${OPTARG} ${USAGE}"
@@ -177,4 +166,19 @@ while getopts ":hudf" opt; do
   esac
 done
 shift $((OPTIND - 1))
-error "${USAGE}"
+
+CMD="${1}"
+case "${CMD}" in
+  up)
+    up_routes
+    ;;
+  down)
+    down_routes
+    ;;
+  watch)
+    watch_routes
+    ;;
+  *)
+    error "${USAGE}"
+    ;;
+esac
