@@ -83,10 +83,12 @@ getPermitRootLogin () {
 
 bindSSHToManagementIP() {
     sed -i -e 's/#ListenAddress 0.0.0.0/ListenAddress '"${1}"'/' /etc/ssh/sshd_config
+    echo "SSH is now bound to the management IP address ${1}"
 }
 
 bindDataPlaneAPIToManagementIP() {
     sed -i -e 's/--tls-host=0.0.0.0/--tls-host='"${1}"'/' /etc/haproxy/haproxy.cfg
+    echo "Data Plane API is now bound to the management IP address ${1}"
 }
 
 bindServicesToManagementIP() {
@@ -95,6 +97,8 @@ bindServicesToManagementIP() {
         echo "management IP must be static" 1>&2
         return 1
     else
+        ip="${ip%/*}"
+        echo "binding SSH and Data Plane API to the management IP address ${ip}"
         bindSSHToManagementIP "${ip}"
         bindDataPlaneAPIToManagementIP "${ip}"
     fi
