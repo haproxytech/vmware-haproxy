@@ -62,6 +62,13 @@
     group: root
     mode: "0644"
 
+- name: Remove default user and the Data Plane API program from HAProxy config file
+  replace:
+    path: /etc/haproxy/haproxy.cfg
+    after: 'userlist controller'
+    regexp: '^(.+)$'
+    replace: '\n'
+
 # The choice of 60000 maximum, concurrent connections was decided as a
 # result of performance testing using Weathervane on a deployed HAProxy
 # appliance with 2 cores and 4 GiB of memory, the default resource
@@ -72,23 +79,11 @@
     regexp: '^(\s+)maxconn(\s+)\d+'
     replace: '\1maxconn\g<2>60000'
 
-- name: Update DataPlane API reload command
-  replace:
-    path: /etc/haproxy/haproxy.cfg
-    regexp: 'kill -SIGUSR2 1'
-    replace: '/usr/bin/systemctl reload haproxy'
-
 - name: Update HAProxy log level
   replace:
     path: /etc/haproxy/haproxy.cfg
     regexp: 'log stdout format raw local0 debug'
     replace: 'log stdout format raw local0 info'
-
-- name: Update DataPlane API log level
-  replace:
-    path: /etc/haproxy/haproxy.cfg
-    regexp: '--log-level=debug'
-    replace: '--log-level=warning'
 
 - name: Enable HAProxy service
   systemd:
@@ -101,9 +96,3 @@
     name: dataplaneapi
     enabled: yes
     daemon_reload: yes
-
-- name: Remove default HAProxy user
-  replace:
-    path: /etc/haproxy/haproxy.cfg
-    regexp: '  user client insecure-password cert'
-    replace: ''
