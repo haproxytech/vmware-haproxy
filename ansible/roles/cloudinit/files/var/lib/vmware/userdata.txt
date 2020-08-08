@@ -7,7 +7,6 @@ chpasswd:
 runcmd:
     - sed -i -e '/^PermitRootLogin/s/^.*$/PermitRootLogin PERMIT_ROOT_LOGIN/' /etc/ssh/sshd_config
     - systemctl restart sshd
-    - sed -i '/^userlist controller/a\  \user HAPROXY_USER insecure-password HAPROXY_PWD' /etc/haproxy/haproxy.cfg
     - if CREATE_DEFAULT_CA; then /var/lib/vmware/retry.sh "new-ca.sh "{{ ds.meta_data.local_ipv4 }}" /etc/haproxy"; fi
     - /var/lib/vmware/retry.sh "new-cert.sh -1 /etc/haproxy/ca.crt -2 /etc/haproxy/ca.key -3 "127.0.0.1,{{ ds.meta_data.network.interfaces.by_ipv4.keys()|join(',') }}" -4 "localhost" "{{ ds.meta_data.hostname }}" /etc/haproxy" 2>&1 | tee /var/log/vmware/new_cert.log
     - vmware-rpctool "info-set guestinfo.dataplaneapi.cacert $(base64 -w0 /etc/haproxy/ca.crt)"

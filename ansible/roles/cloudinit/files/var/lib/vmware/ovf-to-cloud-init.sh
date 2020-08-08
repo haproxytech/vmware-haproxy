@@ -148,6 +148,19 @@ setDataPlaneAPIPort() {
     echo "Data Plane API port set to ${port}"
 }
 
+setHAProxyUserPass() {
+    user="$(getOvfStringVal "loadbalance.haproxy_user")"
+    pass="$(getOvfStringVal "loadbalance.haproxy_pwd")"
+    if [ "${user}" == "" ] || [ "${user}" == "null" ]; then
+        user="admin"
+    fi
+    if [ "${pass}" == "" ] || [ "${pass}" == "null" ]; then
+        pass="haproxy"
+    fi
+    pass="$(openssl passwd -1 "${pass}")"
+    sed -i -e '/^userlist controller/a\  \user '"${user}"' password '"${pass}"'' /etc/haproxy/haproxy.cfg
+}
+
 # If the certificate is copy/pasted into OVF, \ns are turned into spaces so it needs to be formatted
 # Input value is a certificate file. It is modified in place
 # This should be idempotent
@@ -250,8 +263,6 @@ publishUserdata () {
     encoded_userdata=$(sed \
     -e 's/ROOT_PWD_FROM_OVFENV/'"$(getRootPwd)"'/' \
     -e 's/PERMIT_ROOT_LOGIN/'"$(getPermitRootLogin)"'/' \
-    -e 's/HAPROXY_USER/'"$(getOvfStringVal "loadbalance.haproxy_user")"'/' \
-    -e 's/HAPROXY_PWD/'"$(getOvfStringVal "loadbalance.haproxy_pwd")"'/' \
     -e 's/CREATE_DEFAULT_CA/'"$(getCreateDefaultCA)"'/' \
     -e 's/MANAGEMENT_NET_NAME/'"$management_net_name"'/' \
     userdata.txt | base64)
