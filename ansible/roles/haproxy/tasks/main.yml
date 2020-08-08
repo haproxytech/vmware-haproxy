@@ -54,6 +54,14 @@
     group: root
     mode: "0644"
 
+- name: Create Data Plane API configuration file
+  copy:
+    src: files/etc/haproxy/dataplaneapi.cfg
+    dest: /etc/haproxy/dataplaneapi.cfg
+    owner: root
+    group: root
+    mode: "0644"
+
 - name: Create HAProxy configuration file
   copy:
     src: files/etc/haproxy/haproxy.cfg

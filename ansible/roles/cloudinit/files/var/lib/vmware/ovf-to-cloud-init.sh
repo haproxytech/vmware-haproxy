@@ -6,6 +6,9 @@
 set -e
 set -x
 
+# The path to the Data Plane API configuration file.
+data_plane_api_cfg=/etc/haproxy/dataplaneapi.cfg
+
 # These PCI slots are hard-coded in the OVF config
 # This is the reliable way of determining which network is which
 management_pci="0000:03:00.0" # 160 eth0
@@ -119,7 +122,7 @@ bindSSHToIP() {
 }
 
 bindDataPlaneAPIToIP() {
-    sed -i -e 's/--tls-host=0.0.0.0/--tls-host='"${1}"'/' /etc/haproxy/haproxy.cfg
+    sed -i -e 's/TLS_HOST=0.0.0.0/TLS_HOST='"${1}"'/' "${data_plane_api_cfg}"
     echo "Data Plane API is now bound to IP address ${1}"
 }
 
@@ -141,7 +144,7 @@ setDataPlaneAPIPort() {
     if [ "${port}" == "" ] || [ "${port}" == "0" ] || [ "${port}" == "null" ]; then
         port=5556
     fi
-    sed -i -e 's/--tls-port=5556/--tls-port='"${port}"'/' /etc/haproxy/haproxy.cfg
+    sed -i -e 's/TLS_PORT=5556/TLS_PORT='"${port}"'/' "${data_plane_api_cfg}"
     echo "Data Plane API port set to ${port}"
 }
 
