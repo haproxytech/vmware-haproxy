@@ -53,4 +53,10 @@ if ovf-rpctool get userdata >/dev/null 2>&1; then
    exit 0
 fi
 
+# If there's no userdata or ovfenv, this means the VM has most likely been powered off and on
+# As such, all that's needed is the metadata from the filesystem
+if [ -f /var/lib/vmware/encoded_metadata.txt ]; then
+   exit 0
+fi
+
 exit 1

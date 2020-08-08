@@ -6,14 +6,11 @@
 set -e
 set -x
 
-# The path to the postconfig script.
-postconfig_sh=/var/lib/vmware/net-postconfig.sh
-
 # These PCI slots are hard-coded in the OVF config
 # This is the reliable way of determining which network is which
-management_pci="0000:03:00.0" # 160
-workload_pci="0000:0b:00.0" # 192
-frontend_pci="0000:13:00.0" # 224
+management_pci="0000:03:00.0" # 160 eth0
+workload_pci="0000:0b:00.0" # 192 eth1
+frontend_pci="0000:13:00.0" # 224 eth2
 
 # These keys are hardcoded to match the data from OVF config
 management_ip_key="network.management_ip"
@@ -28,11 +25,46 @@ management_net_name="mgmt"
 workload_net_name="workload"
 frontend_net_name="frontend"
 
-# If there is existing userdata, don't attempt to process
+# The script persists the encoded userdata and metadata to the filesystem
+# This is both for post-mortem analysis and so that they can be refreshed on boot
+encoded_userdata_path="/var/lib/vmware/encoded_userdata.txt"
+encoded_metadata_path="/var/lib/vmware/encoded_metadata.txt"
+
+ca_crt_path="/etc/haproxy/ca.crt"
+ca_key_path="/etc/haproxy/ca.key"
+anyip_cfg_path="/etc/vmware/anyip-routes.cfg"
+net_postconfig_path="/var/lib/vmware/net-postconfig.sh"
+first_boot_path="/var/lib/vmware/.ovf_to_cloud_init.done"
+
+# If there is existing userdata, this either an intentional override
 checkForExistingUserdata () {
     val=$(ovf-rpctool get userdata)
     if [ "$val" != "" ]; then
         echo "Exiting due to existing userdata"
+        return 1
+    fi
+}
+
+# Ensure that metadata exists in guestinfo for correct networking
+# On first boot, the persisted metadata is written. On subsequent boots, it is read.
+ensureMetadata () {
+    # Note ovfenv always exists on first boot and is wiped on poweroff
+    if [ "$(ovf-rpctool get metadata)" == "" ] && [ "$(ovf-rpctool get ovfenv)" == "" ]; then
+        if [ -f "$encoded_metadata_path" ]; then
+            encoded_metadata=$(cat $encoded_metadata_path)
+            ovf-rpctool set metadata "$encoded_metadata"
+            ovf-rpctool set metadata.encoding "base64"
+        else
+            echo "Error: Metadata is missing from $encoded_metadata_path"
+        fi
+    fi
+}
+
+# If there is no ovfenv, there's nothing to process
+checkForExistingOvfenv () {
+    val=$(ovf-rpctool get ovfenv)
+    if [ "$val" == "" ]; then
+        echo "Exiting due to no ovfenv to process"
         return 1
     fi
 }
@@ -59,7 +91,7 @@ getOvfStringVal () {
 # - The string to write
 # - The file to write to
 # - The permissions to set
-writeFile () {
+writeCertFile () {
     echo "$1" > "$2"
     formatCertificate "$2"
     chmod "$3" "$2"
@@ -149,6 +181,8 @@ getNetworkInterfaceYamlConfig () {
 # Given one of the PCI constants above, find the network associated with it
 # This will return a non-zero return code if the provided PCI constant cannot
 # be found on this host.
+# Input values:
+# - interface name (before name change)
 getNetworkForPCI () {
 	for name in "eth0" "eth1" "eth2"; do
 		devPath=$(cd /sys/class/net/$name/device; /bin/pwd)
@@ -158,6 +192,7 @@ getNetworkForPCI () {
 			return 0
 		fi
 	done
+    echo "Error: Expected network PCI device for $1 not found"
 	return 1
 }
 
@@ -218,7 +253,7 @@ publishUserdata () {
     -e 's/MANAGEMENT_NET_NAME/'"$management_net_name"'/' \
     userdata.txt | base64)
 
-    echo "$encoded_userdata" > /var/lib/vmware/encoded_userdata.txt
+    echo "$encoded_userdata" > "$encoded_userdata_path"
     ovf-rpctool set userdata "$encoded_userdata"
     ovf-rpctool set userdata.encoding "base64"
 }
@@ -231,7 +266,7 @@ publishMetadata () {
     -e 's/FRONTEND_CONFIG/'"$(getFrontendNetworkConfig)"'/' \
     metadata.txt | base64)
 
-    echo "$encoded_metadata" > /var/lib/vmware/encoded_metadata.txt
+    echo "$encoded_metadata" > "$encoded_metadata_path"
     ovf-rpctool set metadata "$encoded_metadata"
     ovf-rpctool set metadata.encoding "base64"
 }
@@ -254,8 +289,8 @@ writeCAfiles () {
     if [ "$(getCreateDefaultCA)" == "false" ]; then
         ca_cert=$(ovf-rpctool get.ovf appliance.ca_cert)
         ca_cert_key=$(ovf-rpctool get.ovf appliance.ca_cert_key)
-        writeFile "$ca_cert" "/etc/haproxy/ca.crt" "644"
-        writeFile "$ca_cert_key" "/etc/haproxy/ca.key" "644"
+        writeCertFile "$ca_cert" "$ca_crt_path" "644"
+        writeCertFile "$ca_cert_key" "$ca_key_path" "644"
     fi
 }
 
@@ -263,7 +298,7 @@ writeCAfiles () {
 writeAnyipConfig () {
     cidrs=$(ovf-rpctool get.ovf "loadbalance.service_ip_range")
     if [ "$cidrs" != "" ]; then
-        echo -e "${cidrs//,/\\n}" >>"/etc/vmware/anyip-routes.cfg"
+        echo -e "${cidrs//,/\\n}" >> "$anyip_cfg_path"
     fi
 }
 
@@ -274,7 +309,7 @@ writeAnyipConfig () {
 disableDefaultRoute () {
     ip=$(ovf-rpctool get.ovf "$1")
     if [ "$ip" == "" ] || [ "$ip" == "null" ]; then
-        echo "ip route del \$(ip route list | grep -E \"default.*$2.*dhcp\" | cut -d ' ' -f 1-5)" >>"${postconfig_sh}"
+        echo "ip route del \$(ip route list | grep -E \"default.*$2.*dhcp\" | cut -d ' ' -f 1-5)" >>"${net_postconfig_path}"
     fi
 }
 
@@ -309,12 +344,17 @@ writeNetPostConfig () {
     fi
 }
 
-checkForExistingUserdata
-publishUserdata
-publishMetadata
-bindServicesToManagementIP
-setDataPlaneAPIPort
-writeCAfiles
-writeAnyipConfig
-writeRouteTableConfig
-writeNetPostConfig
+if [ ! -f "$first_boot_path" ]; then
+    touch "$first_boot_path"
+    checkForExistingOvfenv      # Exit if there is no ovfenv to process
+    checkForExistingUserdata    # Exit if there is existing userdata (override)
+    publishUserdata
+    publishMetadata
+    bindServicesToManagementIP
+    writeCAfiles
+    writeAnyipConfig
+    writeRouteTableConfig
+    writeNetPostConfig
+else
+    ensureMetadata
+fi

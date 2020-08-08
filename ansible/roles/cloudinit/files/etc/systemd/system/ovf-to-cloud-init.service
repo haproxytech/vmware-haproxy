@@ -4,8 +4,7 @@ Description=ovf-to-cloud-init.service
 # This service *must* run before the first cloud-init service
 Before=cloud-init-local.service
 
-# Do not run this service if the following file exists
-ConditionPathExists=!/var/lib/vmware/.ovf-to-cloud-init.service.done
+# Always run this service. It has the appropriate logic to exit if nothing needs doing
 
 [Install]
 WantedBy=multi-user.target
@@ -20,7 +19,4 @@ WorkingDirectory=/var/lib/vmware
 ExecStartPre=/bin/mkdir -p /etc/vmware /var/log/vmware
 
 # The script that transforms the OVF data into cloud-init data and sets it in guest info
-ExecStart=/bin/sh -c '/var/lib/vmware/ovf-to-cloud-init.sh 2>&1 | tee /var/log/vmware/ovf-to-cloud-init.log'
-
-# This command ensures that this service is not run on subsequent boots.
-ExecStartPost=/bin/touch /var/lib/vmware/.ovf-to-cloud-init.service.done
+ExecStart=/bin/sh -c '/var/lib/vmware/ovf-to-cloud-init.sh 2>&1 | tee -a /var/log/vmware/ovf-to-cloud-init.log'
