@@ -30,6 +30,14 @@
     group: root
     mode: "0644"
 
+- name: Create HAProxy slice drop-in file
+  copy:
+    src: files/etc/systemd/system/haproxy.service.d/slice.conf
+    dest: /etc/systemd/system/haproxy.service.d/slice.conf
+    owner: root
+    group: root
+    mode: "0644"
+
 - name: Create Dataplane API systemd file
   copy:
     src: files/etc/systemd/system/dataplaneapi.service
