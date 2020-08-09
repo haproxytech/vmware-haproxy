@@ -354,6 +354,9 @@ if [ ! -f "$first_boot_path" ]; then
     publishUserdata
     publishMetadata
     bindServicesToManagementIP
+    setHAProxyUserPass
+    setDataPlaneAPIPort
+    writeHostFiles
     writeCAfiles
     writeAnyipConfig
     writeRouteTableConfig
