@@ -1,5 +1,3 @@
-cleanup-guestinfo:
-- userdata
 instance-id: haproxy
 local-hostname: haproxy.vm
 network:
@@ -8,9 +6,7 @@ network:
     nics:
       match:
         name: ens*
-      set-name: eth0
       dhcp4: yes
       dhcp6: no
 wait-on-network:
   ipv4: yes
-  ipv6: no

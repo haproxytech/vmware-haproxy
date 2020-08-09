@@ -61,12 +61,6 @@ write_files:
     -----END RSA PRIVATE KEY-----
 
 runcmd:
-- "hostname \"{{ ds.meta_data.hostname }}\""
-- "hostnamectl set-hostname \"{{ ds.meta_data.hostname }}\""
-- "echo \"::1         ipv6-localhost ipv6-loopback\" >/etc/hosts"
-- "echo \"127.0.0.1   localhost {{ ds.meta_data.hostname }}\" >>/etc/hosts"
-- "echo \"127.0.0.1   {{ ds.meta_data.hostname }}\" >>/etc/hosts"
-- "echo \"{{ ds.meta_data.hostname }}\" >/etc/hostname"
 - "new-cert.sh -1 /etc/haproxy/ca.crt -2 /etc/haproxy/ca.key -3 \"127.0.0.1,{{ ds.meta_data.local_ipv4 }}\" -4 \"localhost\" \"{{ ds.meta_data.hostname }}\" /etc/haproxy"
 
 users:

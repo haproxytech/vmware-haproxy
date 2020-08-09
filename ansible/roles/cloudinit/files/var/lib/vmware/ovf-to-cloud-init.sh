@@ -16,6 +16,7 @@ workload_pci="0000:0b:00.0" # 192 eth1
 frontend_pci="0000:13:00.0" # 224 eth2
 
 # These keys are hardcoded to match the data from OVF config
+hostname_key="network.hostname"
 management_ip_key="network.management_ip"
 workload_ip_key="network.workload_ip"
 frontend_ip_key="network.frontend_ip"
@@ -176,6 +177,15 @@ formatCertificate () {
     "$1"
 }
 
+# Returns the FQDN for the host.
+getHostFQDN() {
+    host_fqdn=$(ovf-rpctool get.ovf "${hostname_key}")
+    if [ "${host_fqdn}" == "" ] || [ "${host_fqdn}" == "null" ]; then
+        host_fqdn="haproxy.local"
+    fi
+    echo "${host_fqdn}"
+}
+
 # Produces the necessary metadata config for an interface
 # Input values:
 # - nic ID
@@ -275,6 +285,7 @@ publishUserdata () {
 # Generate entries for cloud-init metadata and append them to the template
 publishMetadata () {
     encoded_metadata=$(sed \
+    -e 's/HOSTNAME/'"$(getHostFQDN)"'/' \
     -e 's/MGMT_CONFIG/'"$(getManagementNetworkConfig)"'/' \
     -e 's/WORKLOAD_CONFIG/'"$(getWorkloadNetworkConfig)"'/' \
     -e 's/FRONTEND_CONFIG/'"$(getFrontendNetworkConfig)"'/' \
@@ -367,7 +378,6 @@ if [ ! -f "$first_boot_path" ]; then
     bindServicesToManagementIP
     setHAProxyUserPass
     setDataPlaneAPIPort
-    writeHostFiles
     writeCAfiles
     writeAnyipConfig
     writeRouteTableConfig

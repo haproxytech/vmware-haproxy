@@ -576,32 +576,36 @@ EVALUATION LICENSE.  If You are licensing the Software for evaluation purposes, 
     <ProductSection ovf:class="network" ovf:required="false">
       <Info>Management Networking Properties</Info>
       <Category>2. Network Config</Category>
+      <Property ovf:key="hostname" ovf:type="string" ovf:userConfigurable="true" ovf:value="haproxy.local">
+        <Label>2.1. Host Name</Label>
+        <Description>The host name. A fully-qualified domain name is also supported.</Description>
+      </Property>
       <Property ovf:key="nameservers" ovf:type="string" ovf:userConfigurable="true" ovf:value="1.1.1.1, 1.0.0.1">
-        <Label>2.1. DNS</Label>
+        <Label>2.2. DNS</Label>
         <Description>A comma-separated list of IP addresses for up to three DNS servers</Description>
       </Property>
       <Property ovf:key="management_ip" ovf:type="string" ovf:userConfigurable="true">
-        <Label>2.2. Management IP</Label>
+        <Label>2.3. Management IP</Label>
         <Description>The static IP address for the appliance on the Management Port Group in CIDR format (Eg. ip/subnet mask bits). This cannot be DHCP.</Description>
       </Property>
       <Property ovf:key="management_gateway" ovf:type="string" ovf:userConfigurable="true">
-        <Label>2.3. Management Gateway</Label>
+        <Label>2.4. Management Gateway</Label>
         <Description>The gateway address for the workload network. This is also the default gateway for the appliance.</Description>
       </Property>
       <Property ovf:key="workload_ip" ovf:type="string" ovf:userConfigurable="true">
-        <Label>2.4. Workload IP</Label>
+        <Label>2.5. Workload IP</Label>
         <Description>The static IP address for the appliance on the Workload Port Group in CIDR format (Eg. ip/subnet mask bits). This IP must be outside of the Load Balancer IP Range</Description>
       </Property>
       <Property ovf:key="workload_gateway" ovf:type="string" ovf:userConfigurable="true">
-        <Label>2.5. Workload Gateway</Label>
+        <Label>2.6. Workload Gateway</Label>
         <Description>The gateway address for the workload network</Description>
       </Property>
       <Property ovf:key="frontend_ip" ovf:type="string" ovf:userConfigurable="true" ovf:configuration="frontend">
-        <Label>2.6. Frontend IP</Label>
+        <Label>2.7. Frontend IP</Label>
         <Description>(Optional) The static IP address for the appliance on the Frontend Port Group in CIDR format (Eg. ip/subnet mask bits). This IP must be outside of the Load Balancer IP Range</Description>
       </Property>
       <Property ovf:key="frontend_gateway" ovf:type="string" ovf:userConfigurable="true" ovf:configuration="frontend">
-        <Label>2.7. Frontend Gateway</Label>
+        <Label>2.8. Frontend Gateway</Label>
         <Description>(Optional) The gateway address for the frontend network</Description>
       </Property>
     </ProductSection>

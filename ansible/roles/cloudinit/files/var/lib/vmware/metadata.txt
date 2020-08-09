@@ -1,3 +1,4 @@
+local-hostname: HOSTNAME
 network:
     version: 2
     ethernets:
