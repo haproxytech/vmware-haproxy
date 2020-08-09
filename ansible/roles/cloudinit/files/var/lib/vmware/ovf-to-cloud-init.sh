@@ -107,16 +107,6 @@ getRootPwd () {
     escapeString "$salt"
 }
 
-getPermitRootLogin () {
-    val=$(ovf-rpctool get.ovf appliance.permit_root_login)
-    # note ESXi client returns true, vSphere client returns True
-    if [ "$val" == "true" ] || [ "$val" == "True" ] ; then
-        echo "yes"
-    else
-        echo "no"
-    fi
-}
-
 bindSSHToIP() {
     sed -i -e 's/#ListenAddress 0.0.0.0/ListenAddress '"${1}"'/' /etc/ssh/sshd_config
     echo "SSH is now bound to IP address ${1}"
@@ -184,6 +174,18 @@ getHostFQDN() {
         host_fqdn="haproxy.local"
     fi
     echo "${host_fqdn}"
+}
+
+permitRootViaSSH() {
+    permit_root_login=$(ovf-rpctool get.ovf appliance.permit_root_login)
+    # Force a lower-case comparison since the value is True on vCenter and true
+    # when coming from ESX.
+    if [ "${permit_root_login,,}" == "true" ]; then
+        permit_root_login="yes"
+    else
+        permit_root_login="no"
+    fi
+    sed -i -e '/^PermitRootLogin/s/^.*$/PermitRootLogin '"${permit_root_login}"'/' /etc/ssh/sshd_config
 }
 
 # Produces the necessary metadata config for an interface
@@ -272,9 +274,7 @@ getFrontendNetworkConfig () {
 publishUserdata () {
     encoded_userdata=$(sed \
     -e 's/ROOT_PWD_FROM_OVFENV/'"$(getRootPwd)"'/' \
-    -e 's/PERMIT_ROOT_LOGIN/'"$(getPermitRootLogin)"'/' \
     -e 's/CREATE_DEFAULT_CA/'"$(getCreateDefaultCA)"'/' \
-    -e 's/MANAGEMENT_NET_NAME/'"$management_net_name"'/' \
     userdata.txt | base64)
 
     echo "$encoded_userdata" > "$encoded_userdata_path"
@@ -375,6 +375,7 @@ if [ ! -f "$first_boot_path" ]; then
     checkForExistingUserdata    # Exit if there is existing userdata (override)
     publishUserdata
     publishMetadata
+    permitRootViaSSH
     bindServicesToManagementIP
     setHAProxyUserPass
     setDataPlaneAPIPort
