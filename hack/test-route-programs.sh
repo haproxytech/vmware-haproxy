@@ -198,11 +198,13 @@ function test_anyiproutectl() {
   test_prereqs
 
   # Get the AnyIP ranges for the Docker networks.
+  DOCKER_NET_1_ANYIP_SLASH_32="${DOCKER_NET_1_CIDR%.*/*}.128/32"
   DOCKER_NET_1_ANYIP_CIDR_1="${DOCKER_NET_1_CIDR%.*/*}.128/25"
   DOCKER_NET_2_ANYIP_CIDR_1="${DOCKER_NET_2_CIDR%.*/*}.128/25"
   DOCKER_NET_3_ANYIP_CIDR_1="${DOCKER_NET_3_CIDR%.*/*}.128/25"
 
   # Define a random IP address in each of the AnyIP ranges.
+  ANYIP_IP_SLASH_32="${DOCKER_NET_1_ANYIP_SLASH_32%/32}"
   ANYIP_IP_1="${DOCKER_NET_1_ANYIP_CIDR_1%.*/*}.$(shuf -i 128-254 -n 1)"
   ANYIP_IP_2="${DOCKER_NET_2_ANYIP_CIDR_1%.*/*}.$(shuf -i 128-254 -n 1)"
   ANYIP_IP_3="${DOCKER_NET_3_ANYIP_CIDR_1%.*/*}.$(shuf -i 128-254 -n 1)"
@@ -217,6 +219,7 @@ set -o nounset
 set -o pipefail
 
 # Ping each of the IP addresses and expect an error for each one.
+! ping -c2 -W1 "${ANYIP_IP_SLASH_32}"
 ! ping -c2 -W1 "${ANYIP_IP_1}"
 ! ping -c2 -W1 "${ANYIP_IP_2}"
 ! ping -c2 -W1 "${ANYIP_IP_3}"
@@ -225,6 +228,29 @@ set -o pipefail
 /var/lib/vmware/anyiproutectl.sh up
 
 # Create the config file.
+cat <<EOD >/etc/vmware/anyip-routes.cfg
+${DOCKER_NET_1_ANYIP_SLASH_32}
+EOD
+
+# Run the program with a populated config file and expect no errors.
+/var/lib/vmware/anyiproutectl.sh up
+
+# Run the program with a populated config file again and expect no errors.
+/var/lib/vmware/anyiproutectl.sh up
+
+# Ping the /32 address.
+ping -c2 "${ANYIP_IP_SLASH_32}"
+
+# Disable the routes and expect no errors.
+/var/lib/vmware/anyiproutectl.sh down
+
+# Disable the AnyIP routes again and expect no errors.
+/var/lib/vmware/anyiproutectl.sh down
+
+# Ping the /32 address and expect an error.
+! ping -c2 -W1 "${ANYIP_IP_SLASH_32}"
+
+# Recreate the config file.
 cat <<EOD >/etc/vmware/anyip-routes.cfg
 ${DOCKER_NET_1_ANYIP_CIDR_1}
 ${DOCKER_NET_2_ANYIP_CIDR_1}

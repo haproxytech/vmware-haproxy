@@ -66,11 +66,15 @@ function down_routes() {
     if [ -z "${line}" ] || [ "${line::1}" == "#" ]; then
       continue
     fi
-    if ! ip route show table local | grep -qF "local ${line} dev lo scope host"; then
-      echo2 "route already removed for ${line}"
+
+    ip="${line}"
+    # When doing the grep, remove a possible /32 since the "ip route"
+    # command will normalize /32 IP addresses by removing the /32.
+    if ! ip route show table local | grep -qF "local ${ip%/32} dev lo scope host"; then
+      echo2 "route already removed for ${ip}"
     else
-      echo2 "removing route for ${line}"
-      ip route del table local "${line}" dev lo
+      echo2 "removing route for ${ip}"
+      ip route del table local "${ip}" dev lo
     fi
   done <"${CONFIG_FILE}"
 }
@@ -82,11 +86,15 @@ function up_routes() {
     if [ -z "${line}" ] || [ "${line::1}" == "#" ]; then
       continue
     fi
-    if ip route show table local | grep -qF "local ${line} dev lo scope host"; then
-      echo2 "route already exists for ${line}"
+
+    ip="${line}"
+    # When doing the grep, remove a possible /32 since the "ip route"
+    # command will normalize /32 IP addresses by removing the /32.
+    if ip route show table local | grep -qF "local ${ip%/32} dev lo scope host"; then
+      echo2 "route already exists for ${ip}"
     else
-      echo2 "adding route for ${line}"
-      ip route add local "${line}" dev lo
+      echo2 "adding route for ${ip}"
+      ip route add local "${ip}" dev lo
     fi
   done <"${CONFIG_FILE}"
 }
