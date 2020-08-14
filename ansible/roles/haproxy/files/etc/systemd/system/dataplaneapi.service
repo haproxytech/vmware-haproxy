@@ -10,7 +10,7 @@ WantedBy=multi-user.target
 
 [Service]
 TimeoutSec=0
-Restart=Always
+Restart=always
 EnvironmentFile=/etc/haproxy/dataplaneapi.cfg
 WorkingDirectory=/var/lib/haproxy
 Slice=dataplaneapi.slice
