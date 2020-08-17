@@ -6,6 +6,11 @@ global
   user haproxy
   group haproxy
   master-worker
+  # Setting maxconn in the global section is what successfully sets the ulimit on the
+  # host, otherwise we run out of file descriptors (defaulted at 4096).
+  # Note: this value is set to a default to be used in a testing environment, but
+  # is updated via ansible to the production value.
+  maxconn 4000
 
   # Default SSL material locations
   ca-base /etc/ssl/certs
@@ -21,7 +26,6 @@ global
 
 defaults
   mode    tcp
-  maxconn 4000
   log     global
   option  tcplog
   option  dontlognull
@@ -31,6 +35,12 @@ defaults
   timeout client      10s
   timeout queue       5m
   timeout server      10s
+  # tunnel timeout needs to be set at a lowish value to deal with the frequent
+  # reloads invoked by dataplaneapi at scale. With a higher value set, established
+  # connections will hang around and prevent haproxy from killing all off older processes
+  # because those old processes won't terminate those established connections unless
+  # it is told to do so. Having these processes linger for too long can eventually
+  # starve the system of resources as the spawn rate of processes exceeds the death rate.
   timeout tunnel      1h
   timeout client-fin  10s
 
