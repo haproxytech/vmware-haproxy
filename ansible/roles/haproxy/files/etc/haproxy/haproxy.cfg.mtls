@@ -11,6 +11,14 @@ global
   # Note: this value is set to a default to be used in a testing environment, but
   # is updated via ansible to the production value.
   maxconn 4000
+  # This property indicates the number of maximum number of reloads a worker
+  # will survive before being forcefully killed. This number is required to control
+  # the rate at which processes can scale due to the number of reloads outscaling
+  # the rate processes are reaped when all of their connections have been cleaned up.
+  # This number was derived by taking the average virtual memory consumption for a
+  # single HA Proxy process under load, ~28MB, and allocating HA Proxy 3GB out of 4GB
+  # of the total virtual memory space.
+  mworker-max-reloads 100
 
   # Default SSL material locations
   ca-base /etc/ssl/certs
@@ -41,7 +49,7 @@ defaults
   # because those old processes won't terminate those established connections unless
   # it is told to do so. Having these processes linger for too long can eventually
   # starve the system of resources as the spawn rate of processes exceeds the death rate.
-  timeout tunnel      1h
+  timeout tunnel      5m
   timeout client-fin  10s
 
 # Stats are disabled by default because enabling them on a non-local IP address
