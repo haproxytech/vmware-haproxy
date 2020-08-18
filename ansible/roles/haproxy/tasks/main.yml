@@ -77,16 +77,6 @@
     regexp: '^(.+)$'
     replace: '\n'
 
-# The choice of 60000 maximum, concurrent connections was decided as a
-# result of performance testing using Weathervane on a deployed HAProxy
-# appliance with 2 cores and 4 GiB of memory, the default resource
-# allocation for the appliance.
-- name: Update HAProxy maxconn to 60000
-  replace:
-    path: /etc/haproxy/haproxy.cfg
-    regexp: '^(\s+)maxconn(\s+)\d+'
-    replace: '\1maxconn\g<2>60000'
-
 - name: Update HAProxy log level
   replace:
     path: /etc/haproxy/haproxy.cfg
