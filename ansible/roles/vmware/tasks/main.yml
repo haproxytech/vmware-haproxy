@@ -28,6 +28,30 @@
     mode: "0755"
     state: directory
 
+- name: Copy management network link configuration
+  copy:
+    src: files/etc/systemd/network/10-mgmt.link
+    dest: /etc/systemd/network/10-mgmt.link
+    owner: systemd-network
+    group: systemd-network
+    mode: "0644"
+
+- name: Copy workload network link configuration
+  copy:
+    src: files/etc/systemd/network/10-workload.link
+    dest: /etc/systemd/network/10-workload.link
+    owner: systemd-network
+    group: systemd-network
+    mode: "0644"
+
+- name: Copy frontend network link configuration
+  copy:
+    src: files/etc/systemd/network/10-frontend.link
+    dest: /etc/systemd/network/10-frontend.link
+    owner: systemd-network
+    group: systemd-network
+    mode: "0644"
+
 - name: Create anyip-routes service configuration file
   copy:
     src: files/etc/vmware/anyip-routes.cfg

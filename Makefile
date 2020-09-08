@@ -88,7 +88,7 @@ clean-ova: ## Cleans the generated HAProxy load balancer OVA
 .PHONY: build-ova
 build-ova: ## Builds the HAProxy load balancer OVA
 build-ova: clean-ova
-	packer build $(PACKER_FLAGS) packer.json
+	PACKER_LOG=1 packer build $(PACKER_FLAGS) packer.json
 
 .PHONY: verify
 verify: ## Verifies the packer config

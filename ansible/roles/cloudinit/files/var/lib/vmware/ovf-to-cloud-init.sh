@@ -22,9 +22,12 @@ data_plane_api_cfg=/etc/haproxy/dataplaneapi.cfg
 
 # These PCI slots are hard-coded in the OVF config
 # This is the reliable way of determining which network is which
-management_pci="0000:03:00.0" # 160 eth0
-workload_pci="0000:0b:00.0" # 192 eth1
-frontend_pci="0000:13:00.0" # 224 eth2
+# Link files are used so that prescriptive naming behavior can
+# be given to udevd. This keeps systemd-networkd from racing during
+# early discovery/initialization of these devices.
+# management_pci="0000:03:00.0" 160 eth0
+# workload_pci="0000:0b:00.0" 192 eth1
+# frontend_pci="0000:13:00.0" 224 eth2
 
 # These keys are hardcoded to match the data from OVF config
 hostname_key="network.hostname"
@@ -201,38 +204,19 @@ permitRootViaSSH() {
 
 # Produces the necessary metadata config for an interface
 # Input values:
-# - nic ID
 # - interface name
 # - mac address
 # - static IP (CIDR notation)
 # If static IP is not defined, DHCP is assumed
 getNetworkInterfaceYamlConfig () {
-    cfg1="        $1:\n            match:\n                macaddress: $3\n            wakeonlan: true\n"
+    cfg1="        $1:\n            match:\n                macaddress: $2\n            wakeonlan: true\n"
     cfg2=""
-    if [ "$4" == "" ] || [ "$4" == "null" ]; then
+    if [ "$3" == "" ] || [ "$3" == "null" ]; then
         cfg2="            dhcp4: true"
     else
-        cfg2="            dhcp4: false\n            addresses:\n            - "$4
+        cfg2="            dhcp4: false\n            addresses:\n            - "$3
     fi
     echo "$cfg1$cfg2"
-}
-
-# Given one of the PCI constants above, find the network associated with it
-# This will return a non-zero return code if the provided PCI constant cannot
-# be found on this host.
-# Input values:
-# - interface name (before name change)
-getNetworkForPCI () {
-	for name in "eth0" "eth1" "eth2"; do
-		devPath=$(cd /sys/class/net/$name/device; /bin/pwd)
-		pci=$(echo "$devPath" | cut -d '/' -f 6)
-		if [ "$pci" == "$1" ]; then
-			echo "$name"
-			return 0
-		fi
-	done
-    echo "Error: Expected network PCI device for $1 not found"
-	return 1
 }
 
 # Given a network, find the mac address associated with it
@@ -242,10 +226,9 @@ getMacForNetwork () {
 
 # Writes out the config for the management network
 getManagementNetworkConfig () {
-    network=$(getNetworkForPCI "$management_pci")
-    mac=$(getMacForNetwork "$network")
+    mac=$(getMacForNetwork "$management_net_name")
     ip=$(ovf-rpctool get.ovf "$management_ip_key")
-    config="$(getNetworkInterfaceYamlConfig "id0" "$management_net_name" "$mac" "$ip")"
+    config="$(getNetworkInterfaceYamlConfig "$management_net_name" "$mac" "$ip")"
     gateway=$(ovf-rpctool get.ovf "$management_gw_key")
     if [ "$gateway" != "" ] && [ "$gateway" != "null" ]; then
         config="$config\n            gateway4: $gateway"
@@ -261,10 +244,9 @@ getManagementNetworkConfig () {
 
 # Writes out the config for the backend network
 getWorkloadNetworkConfig () {
-    network=$(getNetworkForPCI "$workload_pci")
-    mac=$(getMacForNetwork "$network")
+    mac=$(getMacForNetwork "$workload_net_name")
     ip=$(ovf-rpctool get.ovf "$workload_ip_key")
-    echo -e "$(escapeString "$(getNetworkInterfaceYamlConfig "id1" "$workload_net_name" "$mac" "$ip")")"
+    echo -e "$(escapeString "$(getNetworkInterfaceYamlConfig "$workload_net_name" "$mac" "$ip")")"
 }
 
 # Writes out the config for the frontend network
@@ -273,12 +255,11 @@ getWorkloadNetworkConfig () {
 # If there is no third device, then this function returns gracefully with a
 # successful return code.
 getFrontendNetworkConfig () {
-    if ! network="$(getNetworkForPCI "$frontend_pci")"; then
+    if ! mac=$(getMacForNetwork "$frontend_net_name"); then
         return 0
     fi
-    mac=$(getMacForNetwork "$network")
     ip=$(ovf-rpctool get.ovf "$frontend_ip_key")
-    echo -e "$(escapeString "$(getNetworkInterfaceYamlConfig "id2" "$frontend_net_name" "$mac" "$ip")")"
+    echo -e "$(escapeString "$(getNetworkInterfaceYamlConfig "$frontend_net_name" "$mac" "$ip")")"
 }
 
 # Get all values from OVF and insert them into the userdata template
