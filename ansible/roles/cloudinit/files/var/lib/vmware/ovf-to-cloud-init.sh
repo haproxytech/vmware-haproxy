@@ -94,16 +94,6 @@ escapeString () {
     echo "$escaped"
 }
 
-# Retrieve and escape a string from the ovfenv
-# Input arg is guestinfo ovf key
-getOvfStringVal () {
-    val=$(ovf-rpctool get.ovf "$1")
-    if [ "$val" == "" ]; then
-        exit 0
-    fi
-    escapeString "$val"
-}
-
 # Persist a string to a file
 # Input values:
 # - The string to write
@@ -154,8 +144,8 @@ setDataPlaneAPIPort() {
 }
 
 setHAProxyUserPass() {
-    user="$(getOvfStringVal "loadbalance.haproxy_user")"
-    pass="$(getOvfStringVal "loadbalance.haproxy_pwd")"
+    user="$(ovf-rpctool get.ovf "loadbalance.haproxy_user")"
+    pass="$(ovf-rpctool get.ovf "loadbalance.haproxy_pwd")"
     if [ "${user}" == "" ] || [ "${user}" == "null" ]; then
         user="admin"
     fi
