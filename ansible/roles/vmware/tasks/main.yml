@@ -30,8 +30,8 @@
 
 - name: Copy management network link configuration
   copy:
-    src: files/etc/systemd/network/10-mgmt.link
-    dest: /etc/systemd/network/10-mgmt.link
+    src: files/etc/systemd/network/10-management.link
+    dest: /etc/systemd/network/10-management.link
     owner: systemd-network
     group: systemd-network
     mode: "0644"

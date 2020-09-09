@@ -39,7 +39,7 @@ workload_gw_key="network.workload_gateway"
 frontend_gw_key="network.frontend_gateway"
 
 # These are the display names for the nics
-management_net_name="mgmt"
+management_net_name="management"
 workload_net_name="workload"
 frontend_net_name="frontend"
 
