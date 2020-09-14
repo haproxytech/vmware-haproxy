@@ -211,7 +211,10 @@ getNetworkInterfaceYamlConfig () {
 
 # Given a network, find the mac address associated with it
 getMacForNetwork () {
-	cat /sys/class/net/"$1"/address
+    if [ ! -f "/sys/class/net/$1/address" ]; then
+        return 0
+    fi
+    cat "/sys/class/net/$1/address"
 }
 
 # Writes out the config for the management network
@@ -325,29 +328,29 @@ disableDefaultRoute () {
 # Input values:
 # - 1 Table ID
 # - 2 Table Name
-# - 3 PCI Number
-# - 4 IP Key
-# - 5 Gateway Key
+# - 3 IP Key
+# - 4 Gateway Key
 writeRouteTableConfig() {
-    gateway=$(ovf-rpctool get.ovf "${5}")
+    id="${1}"
+    gateway=$(ovf-rpctool get.ovf "${4}")
     if [ "${gateway}" == "" ] || [ "${gateway}" == "null" ]; then
         return 0
     fi
-    network=$(getNetworkForPCI "${3}")
+    network="${2}"
     mac=$(getMacForNetwork "$network")
-    ip=$(ovf-rpctool get.ovf "${4}")
+    ip=$(ovf-rpctool get.ovf "${3}")
     if [ "$ip" != "" ] && [ "$ip" != "null" ]; then
-        echo "${1},${2},${mac},${ip},${gateway}" >>"/etc/vmware/route-tables.cfg"
+        echo "${id},${network},${mac},${ip},${gateway}" >> "/etc/vmware/route-tables.cfg"
     fi
 }
 
 # Write network postconfig actions to the script run by the net-postconfig service
 writeNetPostConfig () {
-    disableDefaultRoute "$workload_ip_key" "$workload_net_name"
-    writeRouteTableConfig 2 workload "${workload_pci}" "${workload_ip_key}" "${workload_gw_key}"
-    if getNetworkForPCI "$frontend_pci"; then
-        disableDefaultRoute "$frontend_ip_key" "$frontend_net_name"
-        writeRouteTableConfig 3 frontend "${frontend_pci}" "${frontend_ip_key}" "${frontend_gw_key}"
+    disableDefaultRoute "${workload_ip_key}" "${workload_net_name}"
+    writeRouteTableConfig 2 "${workload_net_name}" "${workload_ip_key}" "${workload_gw_key}"
+    if getMacForNetwork "${frontend_net_name}"; then
+        disableDefaultRoute "${frontend_ip_key}" "${frontend_net_name}"
+        writeRouteTableConfig 3 "${frontend_net_name}" "${frontend_ip_key}" "${frontend_gw_key}"
     fi
 }
 
