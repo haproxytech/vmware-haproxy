@@ -66,8 +66,7 @@ checkForExistingUserdata () {
 # Ensure that metadata exists in guestinfo for correct networking
 # On first boot, the persisted metadata is written. On subsequent boots, it is read.
 ensureMetadata () {
-    # Note ovfenv always exists on first boot and is wiped on poweroff
-    if [ "$(ovf-rpctool get metadata)" == "" ] && [ "$(ovf-rpctool get ovfenv)" == "" ]; then
+    if [ "$(ovf-rpctool get metadata)" == "" ]; then
         if [ -f "$encoded_metadata_path" ]; then
             encoded_metadata=$(cat $encoded_metadata_path)
             ovf-rpctool set metadata "$encoded_metadata"
