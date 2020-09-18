@@ -30,27 +30,31 @@
 
 - name: Copy management network link configuration
   copy:
-    src: files/etc/systemd/network/10-management.link
-    dest: /etc/systemd/network/10-management.link
+    src: files/usr/lib/systemd/network/10-management.link
+    dest: /usr/lib/systemd/network/10-management.link
     owner: systemd-network
     group: systemd-network
     mode: "0644"
 
 - name: Copy workload network link configuration
   copy:
-    src: files/etc/systemd/network/10-workload.link
-    dest: /etc/systemd/network/10-workload.link
+    src: files/usr/lib/systemd/network/10-workload.link
+    dest: /usr/lib/systemd/network/10-workload.link
     owner: systemd-network
     group: systemd-network
     mode: "0644"
 
 - name: Copy frontend network link configuration
   copy:
-    src: files/etc/systemd/network/10-frontend.link
-    dest: /etc/systemd/network/10-frontend.link
+    src: files/usr/lib/systemd/network/10-frontend.link
+    dest: /usr/lib/systemd/network/10-frontend.link
     owner: systemd-network
     group: systemd-network
     mode: "0644"
+
+- name: Generate new initrd image containing our link files
+  shell:
+    cmd: /usr/bin/dracut --add network --rebuild /boot/initrd.img-$(uname -r)
 
 - name: Create anyip-routes service configuration file
   copy:
