@@ -354,9 +354,9 @@ writeNetPostConfig () {
 }
 
 if [ ! -f "$first_boot_path" ]; then
-    touch "$first_boot_path"
     checkForExistingOvfenv      # Exit if there is no ovfenv to process
     checkForExistingUserdata    # Exit if there is existing userdata (override)
+    touch "$first_boot_path"
     publishUserdata
     publishMetadata
     permitRootViaSSH
