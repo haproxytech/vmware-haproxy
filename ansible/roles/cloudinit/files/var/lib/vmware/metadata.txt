@@ -8,3 +8,4 @@ FRONTEND_CONFIG
 cleanup-guestinfo:
   - userdata
   - vendordata
+  - ovfEnv
