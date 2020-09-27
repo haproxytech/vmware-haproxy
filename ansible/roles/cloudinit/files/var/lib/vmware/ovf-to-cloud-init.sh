@@ -211,7 +211,7 @@ getNetworkInterfaceYamlConfig () {
 # Given a network, find the mac address associated with it
 getMacForNetwork () {
     if [ ! -f "/sys/class/net/$1/address" ]; then
-        return 0
+        return 1
     fi
     cat "/sys/class/net/$1/address"
 }
