@@ -54,15 +54,6 @@ anyip_cfg_path="/etc/vmware/anyip-routes.cfg"
 net_postconfig_path="/var/lib/vmware/net-postconfig.sh"
 first_boot_path="/var/lib/vmware/.ovf_to_cloud_init.done"
 
-# If there is existing userdata, this either an intentional override
-checkForExistingUserdata () {
-    val=$(ovf-rpctool get userdata)
-    if [ "$val" != "" ]; then
-        echo "Exiting due to existing userdata"
-        return 1
-    fi
-}
-
 # Ensure that metadata exists in guestinfo for correct networking
 # On first boot, the persisted metadata is written. On subsequent boots, it is read.
 ensureMetadata () {
@@ -355,7 +346,6 @@ writeNetPostConfig () {
 
 if [ ! -f "$first_boot_path" ]; then
     checkForExistingOvfenv      # Exit if there is no ovfenv to process
-    checkForExistingUserdata    # Exit if there is existing userdata (override)
     touch "$first_boot_path"
     publishUserdata
     publishMetadata
