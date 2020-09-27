@@ -100,15 +100,19 @@ function down_routes() {
       route_table_name="$(echo "${line}" | awk -F' ' '{print $2}')"
       echo2 "discovered route table ${route_table_name}"
 
-      # Remove the rule for this route table.
-      route_rule="$(ip rule | grep -F "${route_table_name}" | awk -F':[[:space:]]' '{print $2}')"
+      # Remove the rule for this route table. If the route table file does not match
+      # the actual route tables present, ignore the failure so that tables can be re-added gracefully.
+      route_rule="$(ip rule | grep -F "${route_table_name}" | awk -F':[[:space:]]' '{print $2}')" || \
+      echo2 "ignoring failed attempt to find existing table"
       echo2 "removing ip rule: ${route_rule}"
       # shellcheck disable=SC2086
-      ip rule del ${route_rule}
+      ip rule del ${route_rule} || echo2 "ignoring failed attempt to delete route rule \"${route_rule}\""
 
-      # Remove the default route for this route table.
+      # Remove the default route for this route table. If the route file does not match
+      # the actual route tables present, ignore the failure so that route can be re-added gracefully.
       echo2 "removing default route for ${route_table_name}"
-      ip route del table "${route_table_name}" default
+      ip route del table "${route_table_name}" default || \
+      echo "ignoring failed attempt to delete route table \"${route_table_name}\""
     fi
   done <"${RT_TABLES_FILE}"
   mv -f "${RT_TABLES_FILE}.tmp" "${RT_TABLES_FILE}"
