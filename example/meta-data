@@ -10,3 +10,6 @@ network:
       dhcp6: no
 wait-on-network:
   ipv4: yes
+cleanup-guestinfo:
+  - userdata
+  - vendordata

@@ -5,3 +5,6 @@ network:
 MGMT_CONFIG
 WORKLOAD_CONFIG
 FRONTEND_CONFIG
+cleanup-guestinfo:
+  - userdata
+  - vendordata
