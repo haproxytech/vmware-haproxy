@@ -242,6 +242,12 @@ openssl x509 -extfile ssl.conf \
              -CAcreateserial \
              -out "${TLS_FILE_PREFIX}.crt"
 
+
+if [[ ! -f "${TLS_FILE_PREFIX}.crt" || ! -f "${TLS_FILE_PREFIX}.key" ]]; then
+  echo "failed to output certificate and key"
+  exit 1
+fi
+
 # Copy the files to OUT_DIR
 cp -f "${TLS_FILE_PREFIX}.crt" "${TLS_FILE_PREFIX}.key" "$(abspath "${OUT_DIR}")"
 
