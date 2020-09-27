@@ -1,12 +1,12 @@
 instance-id: haproxy
-local-hostname: haproxy.vm
+local-hostname: haproxy.local
 network:
   version: 2
   ethernets:
     nics:
       match:
-        name: ens*
-      dhcp4: yes
+        name: *
+      dhcp4: no
       dhcp6: no
 wait-on-network:
   ipv4: yes
