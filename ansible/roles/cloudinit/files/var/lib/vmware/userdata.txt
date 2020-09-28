@@ -7,6 +7,7 @@ chpasswd:
 # Generate certificates using pre-seeded entropy provided by haveged.
 runcmd:
     - dd if=/dev/random of=/tmp/.random bs=256 count=1
-    - if true; then /var/lib/vmware/retry.sh "new-ca.sh '{{ ds.meta_data.local_ipv4 }}' /etc/haproxy"; fi
+    - if true; then RANDFILE=/tmp/.random /var/lib/vmware/retry.sh "new-ca.sh '{{ ds.meta_data.local_ipv4 }}' /etc/haproxy"; fi
+    - dd if=/dev/random of=/tmp/.random bs=256 count=1
     - RANDFILE=/tmp/.random /var/lib/vmware/retry.sh "new-cert.sh -1 /etc/haproxy/ca.crt -2 /etc/haproxy/ca.key -3 "127.0.0.1,{{ ds.meta_data.network.interfaces.by_ipv4.keys()|join(',') }}" -4 "localhost" "{{ ds.meta_data.hostname }}" /etc/haproxy" 2>&1 | tee /var/log/vmware/new_cert.log
     - vmware-rpctool "info-set guestinfo.dataplaneapi.cacert $(base64 -w0 /etc/haproxy/ca.crt)"
