@@ -330,7 +330,10 @@ writeRouteTableConfig() {
     mac=$(getMacForNetwork "$network")
     ip=$(ovf-rpctool get.ovf "${3}")
     if [ "$ip" != "" ] && [ "$ip" != "null" ]; then
+        # Default Gateway
         echo "${id},${network},${mac},${ip},${gateway}" >> "/etc/vmware/route-tables.cfg"
+        # Link-scoped route
+        echo "${id},${network},${mac},${ip}" >> "/etc/vmware/route-tables.cfg"
     fi
 }
 

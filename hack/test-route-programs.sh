@@ -102,6 +102,10 @@ function net_mac_addr() {
   docker network inspect --format='{{range .Containers}}{{.MacAddress}}{{end}}' "${1}"
 }
 
+function net_ip() {
+  docker network inspect --format='{{range .Containers}}{{.IPv4Address}}{{end}}' "${1}"
+}
+
 # Creates a Docker network if it does not exist.
 function net_create() {
   if [ -z "$(docker network ls -qf "Name=${1}")" ]; then
@@ -189,6 +193,9 @@ function start_haproxy() {
     #DOCKER_NET_1_MAC="$(net_mac_addr "${DOCKER_NET_1}")"
     DOCKER_NET_2_MAC="$(net_mac_addr "${DOCKER_NET_2}")"
     DOCKER_NET_3_MAC="$(net_mac_addr "${DOCKER_NET_3}")"
+
+    DOCKER_IP_NET_2="$(net_ip "${DOCKER_NET_2}")"
+    DOCKER_IP_NET_3="$(net_ip "${DOCKER_NET_3}")"
   fi
 }
 
@@ -311,7 +318,7 @@ function test_routetablectl() {
   test_prereqs
 
   # Create the config file.
-  #   <TableID>,<TableName>,<MACAddress>,<NetworkCIDR>,<Gateway4>
+  #   <TableID>,<TableName>,<MACAddress>,<Network IP (CIDR format)>,<Gateway4>
   TEMP_TEST=".$(date "+%s")"
   cat <<EOF >"${TEMP_TEST}"
 2,frontend,${DOCKER_NET_2_MAC},${DOCKER_NET_2_CIDR},${DOCKER_NET_2_GATEWAY}
@@ -331,8 +338,10 @@ set -o pipefail
 # Create the config file.
 #   <TableID>,<TableName>,<MACAddress>,<NetworkCIDR>,<Gateway4>
 cat <<EOD >/etc/vmware/route-tables.cfg
-2,frontend,${DOCKER_NET_2_MAC},${DOCKER_NET_2_CIDR},${DOCKER_NET_2_GATEWAY}
-3,workload,${DOCKER_NET_3_MAC},${DOCKER_NET_3_CIDR},${DOCKER_NET_3_GATEWAY}
+2,frontend,${DOCKER_NET_2_MAC},${DOCKER_IP_NET_2},${DOCKER_NET_2_GATEWAY}
+3,workload,${DOCKER_NET_3_MAC},${DOCKER_IP_NET_3},${DOCKER_NET_3_GATEWAY}
+2,frontend,${DOCKER_NET_2_MAC},${DOCKER_IP_NET_2}
+3,workload,${DOCKER_NET_3_MAC},${DOCKER_IP_NET_3}
 EOD
 
 # Run the program with a populated config file and expect no errors.

@@ -138,7 +138,12 @@ function up_routes() {
     cfg_table_name="${line_parts[1]}"
     cfg_mac_addr="${line_parts[2]}"
     cfg_cidr="${line_parts[3]}"
-    cfg_gateway="${line_parts[4]}"
+    cfg_gateway=""
+
+    if [[ ${#line_parts[@]} == 5 ]]; then
+        cfg_gateway="${line_parts[4]}"
+    fi
+
     cfg_dev="$(dev_from_mac "${cfg_mac_addr}")"
     route_table_name="${RT_TABLE_NAME_PREFIX}${cfg_table_name}"
 
@@ -146,9 +151,17 @@ function up_routes() {
     echo2 "create new route table id=${cfg_table_id} name=${route_table_name}"
     printf '%d\t%s\n' "${cfg_table_id}" "${route_table_name}" >>"${RT_TABLES_FILE}"
 
-    # Create default route for new route table.
-    echo2 "create default route for ${route_table_name}"
-    ip route add table "${route_table_name}" default via "${cfg_gateway}" dev "${cfg_dev}" proto static
+    if [[ "${cfg_gateway}" == "" ]]; then
+        cfg_destination=$(python3 -c "import sys; import ipaddress; print(ipaddress.ip_network(sys.argv[1], strict=False))" "${cfg_cidr}")
+        host="$(echo "${cfg_cidr}" | cut -d/ -f 1)"
+        cmd="ip route add table ${route_table_name} ${cfg_destination} dev ${cfg_dev} proto kernel scope link src ${host}"
+        echo2 "create route with cmd: ${cmd}"
+        eval "${cmd}"
+    else
+        # Create default route for new route table.
+        echo2 "create default route for ${route_table_name}"
+        ip route add table "${route_table_name}" default via "${cfg_gateway}" dev "${cfg_dev}" proto static
+    fi
 
     # Create IP rule for new route table.
     echo2 "create IP rule for ${route_table_name}"
