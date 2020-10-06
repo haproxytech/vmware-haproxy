@@ -16,7 +16,7 @@ Illustrating the utility of haproxy as a load-balancer is best accomplished usin
 1. Build the image:
 
     ```shell
-    docker build -t haproxy .
+    make build-image
     ```
 
 2. Start the haproxy image in detached mode and map its secure, dataplane API port (`5556`) and the port used by the load balancer (`8085`) to the local host:
@@ -33,9 +33,9 @@ Illustrating the utility of haproxy as a load-balancer is best accomplished usin
       --cert example/client.crt --key example/client.key \
       --user client:cert \
       -H "Content-Type: application/json" \
-      -d '{"name": "lb-frontend", "mode": "tcp"}' \
+      -d '{"name": "lb-frontend", "mode": "http"}' \
       "https://localhost:5556/v2/services/haproxy/configuration/frontends?version=1"
-    {"mode":"tcp","name":"lb-frontend"}
+    {"mode":"http","name":"lb-frontend"}
     ```
 
 4. [Bind](https://www.haproxy.com/documentation/dataplaneapi/latest/#tag/Bind) the frontend configuration to `*:8085`:
@@ -55,7 +55,9 @@ Illustrating the utility of haproxy as a load-balancer is best accomplished usin
 
     ```shell
     $ curl http://localhost:8085
-    curl: (52) Empty reply from server
+    <html><body><h1>503 Service Unavailable</h1>
+    No server is available to handle this request.
+    </body></html>
     ```
 
 6. Create a [backend configuration](https://www.haproxy.com/documentation/dataplaneapi/latest/#tag/Backend) and bind it to the frontend configuration:
@@ -66,9 +68,9 @@ Illustrating the utility of haproxy as a load-balancer is best accomplished usin
       --cert example/client.crt --key example/client.key \
       --user client:cert \
       -H "Content-Type: application/json" \
-      -d '{"name": "lb-backend", "mode":"tcp", "balance": {"algorithm":"roundrobin"}, "adv_check": "tcp-check"}' \
+      -d '{"name": "lb-backend", "mode":"http", "balance": {"algorithm":"roundrobin"}, "adv_check": "tcp-check"}' \
       "https://localhost:5556/v2/services/haproxy/configuration/backends?version=3"
-      {"adv_check":"tcp-check","balance":{"algorithm":"roundrobin","arguments":null},"mode":"tcp","name":"lb-backend"}
+      {"adv_check":"tcp-check","balance":{"algorithm":"roundrobin","arguments":null},"mode":"http","name":"lb-backend"}
     ```
 
 7. Update the frontend to use the backend:
@@ -79,9 +81,9 @@ Illustrating the utility of haproxy as a load-balancer is best accomplished usin
       --cert example/client.crt --key example/client.key \
       --user client:cert \
       -H "Content-Type: application/json" \
-      -d '{"name": "lb-frontend", "mode": "tcp", "default_backend": "lb-backend"}' \
+      -d '{"name": "lb-frontend", "mode": "http", "default_backend": "lb-backend"}' \
       "https://localhost:5556/v2/services/haproxy/configuration/frontends/lb-frontend?version=4"
-      {"default_backend":"lb-backend","mode":"tcp","name":"lb-frontend"}
+      {"default_backend":"lb-backend","mode":"http","name":"lb-frontend"}
     ```
 
 8. Run two simple web servers in detached mode named `http1` and `http2`:
@@ -99,7 +101,7 @@ Illustrating the utility of haproxy as a load-balancer is best accomplished usin
       --cert example/client.crt --key example/client.key \
       --user client:cert \
       -H "Content-Type: application/json" \
-      -d '{"name": "lb-backend-server-1", "address": "'"$(docker inspect http1 -f '{{range .NetworkSettings.Networks}}{{.IPAddress}}{{end}}')"'", "port": 80, "check": "enabled", "check-ssl": "enabled", "maxconn": 30, "verify": "none", "weight": 100}' \
+      -d '{"name": "lb-backend-server-1", "address": "'"$(docker inspect http1 -f '{{range .NetworkSettings.Networks}}{{.IPAddress}}{{end}}')"'", "port": 80, "check": "enabled", "maxconn": 30, "verify": "none", "weight": 100}' \
       "https://localhost:5556/v2/services/haproxy/configuration/servers?backend=lb-backend&version=5"
       {"address":"172.17.0.2","check":"enabled","maxconn":30,"name":"lb-backend-server-1","port":80,"weight":100}
     ```
@@ -125,7 +127,7 @@ Illustrating the utility of haproxy as a load-balancer is best accomplished usin
       --cert example/client.crt --key example/client.key \
       --user client:cert \
       -H "Content-Type: application/json" \
-      -d '{"name": "lb-backend-server-2", "address": "'"$(docker inspect http2 -f '{{range .NetworkSettings.Networks}}{{.IPAddress}}{{end}}')"'", "port": 80, "check": "enabled", "check-ssl": "enabled", "maxconn": 30, "verify": "none", "weight": 100}' \
+      -d '{"name": "lb-backend-server-2", "address": "'"$(docker inspect http2 -f '{{range .NetworkSettings.Networks}}{{.IPAddress}}{{end}}')"'", "port": 80, "check": "enabled", "maxconn": 30, "verify": "none", "weight": 100}' \
       "https://localhost:5556/v2/services/haproxy/configuration/servers?backend=lb-backend&version=6"
       {"address":"172.17.0.3","check":"enabled","maxconn":30,"name":"lb-backend-server-2","port":80,"weight":100}
     ```
@@ -133,7 +135,7 @@ Illustrating the utility of haproxy as a load-balancer is best accomplished usin
 12. Now that both web servers are connected to the load-balancer, use `curl` to query the load-balanced endpoint a few times to validate that both backend servers are being used:
 
     ```shell
-    $ for i in 1 2 3 4; do curl http://localhost:8085 && echo; done
+    $ for i in {1..4}; do curl http://localhost:8085 && echo; done
     Server address: 172.17.0.2:80
     Server name: 456dbfd57701
     Date: 21/Dec/2019:22:26:51 +0000
