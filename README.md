@@ -33,9 +33,9 @@ Illustrating the utility of haproxy as a load-balancer is best accomplished usin
       --cert example/client.crt --key example/client.key \
       --user client:cert \
       -H "Content-Type: application/json" \
-      -d '{"name": "lb-frontend", "mode": "http"}' \
+      -d '{"name": "lb-frontend", "mode": "tcp"}' \
       "https://localhost:5556/v2/services/haproxy/configuration/frontends?version=1"
-    {"mode":"http","name":"lb-frontend"}
+    {"mode":"tcp","name":"lb-frontend"}
     ```
 
 4. [Bind](https://www.haproxy.com/documentation/dataplaneapi/latest/#tag/Bind) the frontend configuration to `*:8085`:
@@ -68,9 +68,9 @@ Illustrating the utility of haproxy as a load-balancer is best accomplished usin
       --cert example/client.crt --key example/client.key \
       --user client:cert \
       -H "Content-Type: application/json" \
-      -d '{"name": "lb-backend", "mode":"http", "balance": {"algorithm":"roundrobin"}, "adv_check": "tcp-check"}' \
+      -d '{"name": "lb-backend", "mode":"tcp", "balance": {"algorithm":"roundrobin"}, "adv_check": "tcp-check"}' \
       "https://localhost:5556/v2/services/haproxy/configuration/backends?version=3"
-      {"adv_check":"tcp-check","balance":{"algorithm":"roundrobin","arguments":null},"mode":"http","name":"lb-backend"}
+      {"adv_check":"tcp-check","balance":{"algorithm":"roundrobin","arguments":null},"mode":"tcp","name":"lb-backend"}
     ```
 
 7. Update the frontend to use the backend:
@@ -81,9 +81,9 @@ Illustrating the utility of haproxy as a load-balancer is best accomplished usin
       --cert example/client.crt --key example/client.key \
       --user client:cert \
       -H "Content-Type: application/json" \
-      -d '{"name": "lb-frontend", "mode": "http", "default_backend": "lb-backend"}' \
+      -d '{"name": "lb-frontend", "mode": "tcp", "default_backend": "lb-backend"}' \
       "https://localhost:5556/v2/services/haproxy/configuration/frontends/lb-frontend?version=4"
-      {"default_backend":"lb-backend","mode":"http","name":"lb-frontend"}
+      {"default_backend":"lb-backend","mode":"tcp","name":"lb-frontend"}
     ```
 
 8. Run two simple web servers in detached mode named `http1` and `http2`:
