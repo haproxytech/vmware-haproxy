@@ -40,13 +40,14 @@ FLAGS
   -c    country (defaults to US)
   -s    state or province (defaults to CA)
   -l    locality (defaults to Palo Alto)
-  -o    orgnization (defaults to VMware)
-  -u    orgnizational unit (defaults to CAPV)
+  -o    organization (defaults to VMware)
+  -u    organizational unit (defaults to CAPV)
   -b    bit size (defaults to 2048)
   -d    days until expiry (defaults to 3650)
   -k    key usage (defaults to digitalSignature, keyEncipherment)
   -e    extended key usage (defaults to clientAuth, serverAuth)
   -f    file name prefix (defaults to server)
+  -n    skip generating a certificate and key if one already exists.
 "
 
 function error() {
@@ -60,7 +61,7 @@ function fatal() {
 }
 
 # Start of main script
-while getopts ":hv1:2:3:4:c:s:l:o:u:b:d:k:e:f:" opt; do
+while getopts ":hvn1:2:3:4:c:s:l:o:u:b:d:k:e:f:" opt; do
   case ${opt} in
     h)
       error "${USAGE}" && exit 1
@@ -107,6 +108,9 @@ while getopts ":hv1:2:3:4:c:s:l:o:u:b:d:k:e:f:" opt; do
     f)
       TLS_FILE_PREFIX="${OPTARG}"
       ;;
+    n)
+      NO_OVERWRITE=1
+      ;;
     v)
       VERBOSE=1
       set -x
@@ -123,6 +127,7 @@ shift $((OPTIND-1))
 
 # Verbose mode
 VERBOSE="${VERBOSE-}"
+NO_OVERWRITE="${NO_OVERWRITE-}"
 
 # The strength of the generated certificate
 TLS_DEFAULT_BITS=${TLS_DEFAULT_BITS:-2048}
@@ -158,6 +163,12 @@ TLS_COMMON_NAME="${1}"
 # The directory to which to write the public and private keys.
 { [ "${#}" -gt "1" ] && OUT_DIR="${2}"; } || OUT_DIR="$(pwd)"
 mkdir -p "${OUT_DIR}"
+
+if { [ -f "${OUT_DIR}/${TLS_FILE_PREFIX}.crt" ] || [ -f "${OUT_DIR}/${TLS_FILE_PREFIX}.key" ]; } && [ $NO_OVERWRITE ]; then
+  echo "Existing ${TLS_FILE_PREFIX}.crt or ${TLS_FILE_PREFIX}.key "\
+  "exists in ${OUT_DIR}. Skipping cert generation."
+  exit 0
+fi
 
 # Make a temporary directory and switch to it.
 OLD_DIR="$(pwd)"
