@@ -13,7 +13,7 @@ The latest version of the appliance OVA is always available from the [releases](
 
 | Version | SHA256 |
 |---|---|
-| [v0.1.8](https://github.com/haproxytech/vmware-haproxy/releases/download/v0.1.8/vmware-haproxy-v0.1.8.ova) | `eac73c1207c05aeeece6d17dd1ac1dde0e557d94812f19082751cfb6925ad082` |
+| [v0.1.8](https://cdn.haproxy.com/download/haproxy/vsphere/ova/vmware-haproxy-v0.1.8.ova) | `eac73c1207c05aeeece6d17dd1ac1dde0e557d94812f19082751cfb6925ad082` |
 
 ## Deploy
 
