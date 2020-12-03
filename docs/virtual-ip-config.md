@@ -6,7 +6,7 @@ HAProxy setups are often configured to load-balance traffic on a single endpoint
 
 This HAProxy appliance is designed to allow HAProxy to load balance traffic across a range of Virtual IPs (VIP). This uses a capability of Linux called AnyIP which allows the appliance to respond to all IP addresses within specified ranges.
 
-This capability works in symbiosis with HAProxy and the external control plane managing HAProxy configuration. The external control plane manages a pool of IPs that it can allocate to various services. When a new service is defined, the external control plane configures HAProxy with a frontend definition containing an IP it allocates from the pool, which should - if everything is correctly configured - fall within a VIP range defined using AnyIP.
+This capability works in symbiosis with HAProxy and the external control plane managing HAProxy configuration. In the case of vSphere with Tanzu, the Supervisor Cluster is that control plane. The external control plane manages a pool of IPs that it can allocate to various services. When a new service is defined, the external control plane configures HAProxy with a frontend definition containing an IP it allocates from the pool, which should - if everything is correctly configured - fall within a VIP range defined using AnyIP.
 
 ## How does AnyIP work?
 
@@ -34,7 +34,7 @@ When you deploy the appliance, it will ask you for one or more VIP ranges which 
 
 Once the appliance is up and running, you can test that the AnyIP is working by pinging IP addresses in the configured VIP ranges. You can do this from within the appliance or outside. It should respond to all of them.
 
-If you want to extend the VIP ranges of the appliance, you can modify the `/etc/vmware/anyip-routes.cfg` file and that will automatically update the routing tables. However, please note that the external control plane managing the configuration of the HAProxy instance *also* has to be told that it can allocate IPs out of this new range (see above).
+If you want to extend the VIP ranges of the appliance, you can modify the `/etc/vmware/anyip-routes.cfg` file and that will automatically update the routing tables. However, please note that the external control plane managing the configuration of the HAProxy instance *also* needs to be told that it can allocate IPs out of this new range (see above).
 
 ## What precautions do I need to consider?
 
