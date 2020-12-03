@@ -26,3 +26,7 @@ Documentation on how to build the appliance is available [here](./docs/how-to-bu
 ## Test
 
 Documentation on how to test the components in the appliance with Docker containers is available [here](./docs/how-to-container.md).
+
+## Configure
+
+Documentation on how to configure the Virtual IPs managed by the appliance is available [here](./docs/virtual-ip-config.md)
