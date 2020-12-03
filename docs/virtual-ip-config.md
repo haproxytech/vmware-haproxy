@@ -53,6 +53,7 @@ AnyIP is a fairly simple concept, so there's not too many things to check
 3. Check that the VIP ranges you want are present in the local routing table.
 ```
 ip route list table local
+
 # you should see an entry that looks like this:
 local 192.168.20.128/25 dev lo scope host
 ```
@@ -66,7 +67,7 @@ systemctl status anyip-routes
 ```
 journalctl -xeu anyip-routes
 ```
-7. Make sure that the configuration on the control plane managing HAProxy frontends agrees with the configuration in the appliance. In the case of vSphere with Tanzu Workload Enablement, it's the field marked "IP Address Ranges for Virtual Servers" (see https://youtu.be/wfYDDbBJHfM?t=1947). The ranges in here should be the same or a subset of the ranges in `/etc/vmware/anyip-routes.cfg`.
+7. Make sure that the configuration on the control plane managing HAProxy frontends agrees with the configuration in the appliance. In the case of vSphere with Tanzu Workload Management, it's the field marked "IP Address Ranges for Virtual Servers" (see https://youtu.be/wfYDDbBJHfM?t=1947). The ranges in here should be the same or a subset of the ranges in `/etc/vmware/anyip-routes.cfg`.
 
 ## Advanced
 
