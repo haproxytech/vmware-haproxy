@@ -17,7 +17,9 @@ The latest version of the appliance OVA is always available from the [releases](
 
 ## Deploy
 
-Please see the [_vSphere with Tanzu Quick Start Guide_](https://core.vmware.com/resource/vsphere-tanzu-quick-start-guide) on how to deploy the appliance on vSphere with Tanzu.
+Refer to the [system requirements](https://docs.vmware.com/en/VMware-vSphere/7.0/vmware-vsphere-with-tanzu/GUID-C86B9028-2701-40FE-BA05-519486E010F4.html) and the [installation documentation](https://docs.vmware.com/en/VMware-vSphere/7.0/vmware-vsphere-with-tanzu/GUID-5673269F-C147-485B-8706-65E4A87EB7F0.html).
+
+For a tutorial on deploying and using the HAProxy load balancer in vSphere with Tanzu, check out the [vSphere with Tanzu Quick Start Guide](https://core.vmware.com/resource/vsphere-tanzu-quick-start-guide).
 
 ## Build
 
