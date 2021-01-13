@@ -1,0 +1,66 @@
+#!/usr/bin/env bash
+#
+# Collects support bundles for HAProxy and records networking information for debugging.
+#
+
+function save_haproxy_info {
+  # Collect HAProxy logs
+  journalctl -xu haproxy > /var/log/haproxy.log
+
+  # Collect the HAProxy version.
+  { { rpm -qa haproxy || true; } &&
+    { command -v haproxy >/dev/null 2>&1 && haproxy -vv || /usr/sbin/haproxy -vv; }; \
+  } > /etc/haproxy/haproxy-version
+
+  # Collect DPAPI version
+  { command -v dataplaneapi >/dev/null 2>&1 && dataplaneapi --version || /usr/local/bin/dataplaneapi --version; } \
+  > /etc/haproxy/dataplaneapi-version
+}
+
+function save_network_info {
+  { echo '--- IP TABLES ---' && \
+  iptables -S && \
+  echo '--- IP ADDRS ---' && \
+  ip a && \
+  echo '--- IP ROUTES ---' && \
+  ip r && \
+  echo '--- IP ROUTE TABLE LOCAL ---' && \
+  ip r show table local && \
+  echo '--- IP ROUTE TABLES ---' && \
+  grep 'rtctl_' /etc/iproute2/rt_tables | awk '{print $2}' | while IFS= read -r table_name
+  do
+    echo "${table_name}" && ip route show table "${table_name}"
+  done && \
+  echo '--- OPEN PORTS ---' && lsof -noP | grep LISTEN; } > /var/log/network-info.log
+}
+
+function save_route_table_info {
+  journalctl -xu route-tables > /var/log/routes.log
+}
+
+function save_anyip_info {
+  journalctl -xu anyip > /var/log/anyip.log
+}
+
+
+if [ "$(id -u)" != 0 ]; then
+  echo "This script must be executed as root"
+  exit 1
+fi
+
+echo "Starting support bundle collection"
+
+save_haproxy_info
+save_network_info
+save_anyip_info
+save_route_table_info
+
+support_output="${HOME}/haproxy-support.tgz"
+
+tar -C / -czf "${support_output}" \
+  /etc/haproxy \
+  /var/log/ \
+  /var/log/vmware \
+  /etc/vmware/ > /dev/null 2>&1
+
+echo "Support bundle collected at ${support_output}"

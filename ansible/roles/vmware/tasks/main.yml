@@ -52,6 +52,14 @@
     group: systemd-network
     mode: "0644"
 
+- name: Copy support bundle collection script
+  copy:
+    src: files/usr/local/bin/haproxy-support
+    dest: /usr/local/bin/haproxy-support
+    owner: root
+    group: root
+    mode: "0544"
+
 - name: Generate new initrd image containing our link files
   shell:
     cmd: /usr/bin/dracut --add network --rebuild /boot/initrd.img-$(uname -r)
