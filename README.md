@@ -6,10 +6,15 @@ This project enables customers to build an OSS virtual appliance with HAProxy an
 * [Deploy](#deploy)
 * [Build](#build)
 * [Test](#test)
+* [Upgrade](#upgrade)
 
 ## Download
 
 The latest version of the appliance OVA is always available from the [releases](https://github.com/haproxytech/vmware-haproxy/releases) page:
+
+### NOTE
+If running on or upgrading to vSphere 7.0.1 or later, you _must_ upgrade to version v0.1.9 or later.
+
 
 | Version | SHA256 |
 |---|---|
@@ -33,4 +38,9 @@ Documentation on how to test the components in the appliance with Docker contain
 
 ## Configure
 
-Documentation on how to configure the Virtual IPs managed by the appliance is available [here](./docs/virtual-ip-config.md)
+Documentation on how to configure the Virtual IPs managed by the appliance is available [here](./docs/virtual-ip-config.md).
+
+## Upgrade
+
+Documentation on recommended upgrade procedures can be found [here](./docs/upgrade.md).
+
