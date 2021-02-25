@@ -20,7 +20,7 @@ This document describes the recommended upgrade process. The upgrade process gen
 - Find and copy `/etc/haproxy/server.crt` and `/etc/haproxy/server.key` out of the instance. Optionally copy the CA files if you need them.
 - If you have made any customizations to `/etc/haproxy/haproxy.cfg` or `/etc/haproxy/dataplaneapi.cfg` then make backups or notes of those customizations at this time.
 - Deploy the new VM with an _identical_ configuration as the currently running instance using the existing HAProxy `server.crt` and `server.key` as inputs.
-- Power down the old instance. You can revert back to this image if something goes wrong with the upgrade.
+- Power down the old instance. You can revert back to this instance if something goes wrong with the upgrade.
 - Optionally add resource reservations for the new VM.
 - Power on the new instance.
 - Verify the configuration on the new VM. See [verification](#verification) below on the minimum recommended checks to perform.
@@ -52,4 +52,3 @@ Finally, ensure the cluster starts programming routes via dataplaneapi into `hap
 ## Recovery
 
 If things don't go according to plan and the upgrade cannot continue, then power off the new appliance and power on the old appliance. It is _very_ important to not run both appliances on the same network because they will ARP for the same IP addresses causing flaky connections.
-
