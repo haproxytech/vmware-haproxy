@@ -41,7 +41,7 @@ Verify haproxy and dataplaneapi services have started and are running:
 
 Re-apply any custom changes to the `haproxy.cfg` or `dataplaneapi.cfg` files and restart the services.
 
-On the service side, ensure service-type load balancer service IPs are reachable on both the supervisor and Tanzu Clusters.
+On the service side, ensure service-type load balancer external IPs are reachable on both the supervisor and Tanzu clusters.
 
 Finally, ensure the cluster starts programming routes via dataplaneapi into `haproxy.cfg` and spawning a new HAProxy processes. If this happens, you should see the `haproxy.cfg` grow in size as routes are added. This make take some time if the cluster operator is in an exponential backoff loop. As a rule of thumb, if you don't have routes within 5 minutes then something is probably wrong. Double check dataplane api logs to ensure it is processing traffic.
 
