@@ -17,6 +17,7 @@ common_photon_rpms:
 - distrib-compat
 - ebtables
 - haproxy
+- haveged
 - inotify-tools
 - iputils
 - iproute2
@@ -35,9 +36,9 @@ common_photon_rpms:
 - sed
 - socat
 - tar
+- tcpdump
 - unzip
 - vim
-- haveged
 
 disable_public_repos: false
 extra_rpms: ""
