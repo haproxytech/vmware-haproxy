@@ -358,7 +358,6 @@ if [ ! -f "$first_boot_path" ]; then
     setDataPlaneAPIPort
     writeCAfiles
     writeAnyipConfig
-    writeRouteTableConfig
     writeNetPostConfig
 else
     ensureMetadata
