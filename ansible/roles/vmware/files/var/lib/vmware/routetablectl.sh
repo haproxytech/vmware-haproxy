@@ -118,11 +118,25 @@ function down_routes() {
   mv -f "${RT_TABLES_FILE}.tmp" "${RT_TABLES_FILE}"
 }
 
+# Adds route tables to the route tables file. Prevents duplicates from being added.
+add_route_tables() {
+  tables=$(grep -E '^\w' "${CONFIG_FILE}" | cut -d, -f1,2 | uniq)
+  for table in ${tables}; do
+    IFS=, read -ra line <<< "${table}"
+    cfg_table_id="${line[0]}"
+    cfg_table_name="${line[1]}"
+    echo2 "create new route table id=${cfg_table_id} name=${route_table_name}"
+    printf '%d\t%s\n' "${cfg_table_id}" "${route_table_name}" >>"${RT_TABLES_FILE}"
+  done
+}
+
 # Enables the custom route tables.
 function up_routes() {
   # Enabling the custom route tables first requires removing any custom route
   # tables.
   down_routes
+
+  add_route_tables
 
   while IFS= read -r line; do
     # Skip empty and commented lines.
@@ -146,10 +160,6 @@ function up_routes() {
 
     cfg_dev="$(dev_from_mac "${cfg_mac_addr}")"
     route_table_name="${RT_TABLE_NAME_PREFIX}${cfg_table_name}"
-
-    # Create a new route table.
-    echo2 "create new route table id=${cfg_table_id} name=${route_table_name}"
-    printf '%d\t%s\n' "${cfg_table_id}" "${route_table_name}" >>"${RT_TABLES_FILE}"
 
     if [[ "${cfg_gateway}" == "" ]]; then
         cfg_destination=$(python3 -c "import sys; import ipaddress; print(ipaddress.ip_network(sys.argv[1], strict=False))" "${cfg_cidr}")

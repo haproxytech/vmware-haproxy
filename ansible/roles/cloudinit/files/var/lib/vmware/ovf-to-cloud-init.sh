@@ -38,6 +38,8 @@ management_gw_key="network.management_gateway"
 workload_gw_key="network.workload_gateway"
 frontend_gw_key="network.frontend_gateway"
 
+workload_routes_key="network.workload.routes"
+
 # These are the display names for the nics
 management_net_name="management"
 workload_net_name="workload"
@@ -82,6 +84,10 @@ checkForExistingOvfenv () {
 escapeString () {
     escaped=$(printf "%q" "$1" | sed 's/\//\\\//g')
     echo "$escaped"
+}
+
+getWorkloadRoutes() {
+  routes=$(ovf-rpctool get.ovf "${workload_routes_key}")
 }
 
 # Persist a string to a file
