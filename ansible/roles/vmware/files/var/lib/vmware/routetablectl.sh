@@ -62,6 +62,11 @@ CONFIG_FILE="${CONFIG_FILE:-/etc/vmware/route-tables.cfg}"
 # The path to the file with the route table identifiers.
 RT_TABLES_FILE="${RT_TABLES_FILE:-/etc/iproute2/rt_tables}"
 
+# Path to the file for additional workload networks.
+WORKLOAD_NETWORKS_FILE="${WORKLOAD_NETWORKS_FILE:-/etc/vmware/workload-networks.cfg}"
+
+# Name of the route table for workload networks.
+WORKLOAD_RT="${WORKLOAD_RT:-${RT_TABLE_NAME_PREFIX}workload}"
 
 ################################################################################
 ##                                   funcs
@@ -74,12 +79,19 @@ function error() {
   echo "${@}" 1>&2
   return "${exit_code}"
 }
+
 function fatal() {
   error "${@}"
   exit 1
 }
+
 function echo2() {
-  echo "${@}" 1>&2
+  echo "${@}" 2>&1
+}
+
+function call() {
+  echo2 "${@}"
+  eval "${@}"
 }
 
 # Returns the name of the device that has the provided MAC address.
@@ -100,34 +112,45 @@ function down_routes() {
       route_table_name="$(echo "${line}" | awk -F' ' '{print $2}')"
       echo2 "discovered route table ${route_table_name}"
 
-      # Remove the rule for this route table. If the route table file does not match
-      # the actual route tables present, ignore the failure so that tables can be re-added gracefully.
-      route_rule="$(ip rule | grep -F "${route_table_name}" | awk -F':[[:space:]]' '{print $2}')" || \
-      echo2 "ignoring failed attempt to find existing table"
-      echo2 "removing ip rule: ${route_rule}"
-      # shellcheck disable=SC2086
-      ip rule del ${route_rule} || echo2 "ignoring failed attempt to delete route rule \"${route_rule}\""
+      # Remove the rules for this route table.
+      while ip call "rule del from 0/0 to 0/0 table ${route_table_name} 2>/dev/null"; do true; done
 
-      # Remove the default route for this route table. If the route file does not match
-      # the actual route tables present, ignore the failure so that route can be re-added gracefully.
-      echo2 "removing default route for ${route_table_name}"
-      ip route del table "${route_table_name}" default || \
-      echo "ignoring failed attempt to delete route table \"${route_table_name}\""
+      # Remove any existing routes from our route tables.
+      while IFS= read -r route; do
+        call "ip route del table ${route_table_name} ${route}"
+      done < <(ip route show table "${route_table_name}")
     fi
-  done <"${RT_TABLES_FILE}"
+  done < "${RT_TABLES_FILE}"
   mv -f "${RT_TABLES_FILE}.tmp" "${RT_TABLES_FILE}"
 }
 
 # Adds route tables to the route tables file. Prevents duplicates from being added.
-add_route_tables() {
-  tables=$(grep -E '^\w' "${CONFIG_FILE}" | cut -d, -f1,2 | uniq)
+function add_route_tables() {
+  tables=$(grep -E '^\w' "${CONFIG_FILE}" || echo "" | cut -d, -f1,2 | uniq)
   for table in ${tables}; do
     IFS=, read -ra line <<< "${table}"
-    cfg_table_id="${line[0]}"
-    cfg_table_name="${line[1]}"
-    echo2 "create new route table id=${cfg_table_id} name=${route_table_name}"
-    printf '%d\t%s\n' "${cfg_table_id}" "${route_table_name}" >>"${RT_TABLES_FILE}"
+    route_table_id="${line[0]}"
+    route_table_name="${RT_TABLE_NAME_PREFIX}${line[1]}"
+    echo2 "create new route table id=${route_table_id} name=${route_table_name}"
+    printf '%d\t%s\n' "${route_table_id}" "${route_table_name}" >>"${RT_TABLES_FILE}"
   done
+}
+
+# Adds lookup rules for workload routes. The net result is that additional workloads can be reached
+# via the default gateway of the workload network route table.
+function add_workload_network_rules() {
+  if [ ! -f "${WORKLOAD_NETWORKS_FILE}" ]; then
+    echo2 "no additional workload networks detected"
+    return
+  fi
+
+  while IFS= read -r cfg_cidr; do
+    # Skip empty and commented lines.
+    if [ -z "${cfg_cidr}" ] || [ "${cfg_cidr::1}" == "#" ]; then
+      continue
+    fi
+    call "ip rule add to ${cfg_cidr} lookup ${WORKLOAD_RT}"
+  done < "${WORKLOAD_NETWORKS_FILE}"
 }
 
 # Enables the custom route tables.
@@ -136,7 +159,13 @@ function up_routes() {
   # tables.
   down_routes
 
+  if [ ! -f "${CONFIG_FILE}" ]; then
+    echo2 "missing config file ${CONFIG_FILE}"
+    return 0
+  fi
+
   add_route_tables
+  add_workload_network_rules
 
   while IFS= read -r line; do
     # Skip empty and commented lines.
@@ -148,7 +177,6 @@ function up_routes() {
     IFS=, read -ra line_parts <<<"${line}"
 
     # Store route table configuration's parts.
-    cfg_table_id="${line_parts[0]}"
     cfg_table_name="${line_parts[1]}"
     cfg_mac_addr="${line_parts[2]}"
     cfg_cidr="${line_parts[3]}"
@@ -164,18 +192,14 @@ function up_routes() {
     if [[ "${cfg_gateway}" == "" ]]; then
         cfg_destination=$(python3 -c "import sys; import ipaddress; print(ipaddress.ip_network(sys.argv[1], strict=False))" "${cfg_cidr}")
         host="$(echo "${cfg_cidr}" | cut -d/ -f 1)"
-        cmd="ip route add table ${route_table_name} ${cfg_destination} dev ${cfg_dev} proto kernel scope link src ${host}"
-        echo2 "create route with cmd: ${cmd}"
-        eval "${cmd}"
+        call "ip route add table ${route_table_name} ${cfg_destination} dev ${cfg_dev} proto kernel scope link src ${host}"
     else
         # Create default route for new route table.
-        echo2 "create default route for ${route_table_name}"
-        ip route add table "${route_table_name}" default via "${cfg_gateway}" dev "${cfg_dev}" proto static
+        call "ip route add table ${route_table_name} default via ${cfg_gateway} dev ${cfg_dev} proto static"
+        # Create IP rule for new route table.
+        call "ip rule add from ${cfg_cidr} lookup ${route_table_name}"
     fi
 
-    # Create IP rule for new route table.
-    echo2 "create IP rule for ${route_table_name}"
-    ip rule add from "${cfg_cidr}" lookup "${route_table_name}"
   done <"${CONFIG_FILE}"
 }
 

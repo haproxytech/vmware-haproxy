@@ -611,12 +611,16 @@ EVALUATION LICENSE.  If You are licensing the Software for evaluation purposes, 
         <Label>2.6. Workload Gateway</Label>
         <Description>The gateway address for the workload network</Description>
       </Property>
+      <Property ovf:key="additional_workload_networks" ovf:type="string" ovf:userConfigurable="true">
+        <Label>2.7. Additional Workload Networks</Label>
+        <Description>(Optional) A comma-separated list of networks in CIDR notation (e.g. 192.168.0.1/24) to the workload networks. These networks must be routable via the Workload Gateway. This list must not include the primary workload network.</Description>
+      </Property>
       <Property ovf:key="frontend_ip" ovf:type="string" ovf:userConfigurable="true" ovf:configuration="frontend">
-        <Label>2.7. Frontend IP</Label>
+        <Label>2.8. Frontend IP</Label>
         <Description>(Optional) The static IP address for the appliance on the Frontend Port Group in CIDR format (Eg. ip/subnet mask bits). This IP must be outside of the Load Balancer IP Range</Description>
       </Property>
       <Property ovf:key="frontend_gateway" ovf:type="string" ovf:userConfigurable="true" ovf:configuration="frontend">
-        <Label>2.8. Frontend Gateway</Label>
+        <Label>2.9. Frontend Gateway</Label>
         <Description>(Optional) The gateway address for the frontend network</Description>
       </Property>
     </ProductSection>

@@ -38,7 +38,7 @@ management_gw_key="network.management_gateway"
 workload_gw_key="network.workload_gateway"
 frontend_gw_key="network.frontend_gateway"
 
-workload_routes_key="network.workload.routes"
+workload_networks_key="network.additional_workload_networks"
 
 # These are the display names for the nics
 management_net_name="management"
@@ -86,8 +86,13 @@ escapeString () {
     echo "$escaped"
 }
 
-getWorkloadRoutes() {
-  routes=$(ovf-rpctool get.ovf "${workload_routes_key}")
+# Extract the additional workload networks and store them in the appropriate file.
+# These CIDRs will be picked up by the route-tables service and the appropriate routes will be created.
+writeWorkloadNetworks() {
+  networks=$(ovf-rpctool get.ovf "${workload_networks_key}")
+  if [ -n "${networks}" ]; then
+    echo "${networks//,/$'\n'}" > /etc/vmware/workload-networks.cfg
+  fi
 }
 
 # Persist a string to a file
@@ -364,6 +369,7 @@ if [ ! -f "$first_boot_path" ]; then
     setDataPlaneAPIPort
     writeCAfiles
     writeAnyipConfig
+    writeWorkloadNetworks
     writeNetPostConfig
 else
     ensureMetadata
