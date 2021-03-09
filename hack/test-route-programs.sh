@@ -235,6 +235,9 @@ function test_anyiproutectl() {
 set -o errexit
 set -o nounset
 set -o pipefail
+set -v
+
+echo "starting test" >&2
 
 # Ping each of the IP addresses and expect an error for each one.
 ! ping -c2 -W1 "${ANYIP_IP_SLASH_32}"
@@ -331,6 +334,7 @@ EOF
 set -o errexit
 set -o nounset
 set -o pipefail
+set -v
 
 # Run the program with an empty config file and expect no errors.
 /var/lib/vmware/routetablectl.sh up
@@ -344,6 +348,11 @@ cat <<EOD >/etc/vmware/route-tables.cfg
 3,workload,${DOCKER_NET_3_MAC},${DOCKER_IP_NET_3}
 EOD
 
+# Create the networks file.
+# It's a newline-delimited list of CIDRs.
+echo "10.169.10.0/24" > /etc/vmware/workload-networks.cfg
+echo "10.169.20.0/24" >> /etc/vmware/workload-networks.cfg
+
 # Run the program with a populated config file and expect no errors.
 /var/lib/vmware/routetablectl.sh up
 
@@ -352,8 +361,12 @@ grep $'2\trtctl_frontend' /etc/iproute2/rt_tables
 grep $'3\trtctl_workload' /etc/iproute2/rt_tables
 
 # Assert the expected IP rules exist.
-ip rule | grep rtctl_frontend
-ip rule | grep rtctl_workload
+ip rule show table rtctl_frontend
+ip rule show table rtctl_workload
+
+# Assert that rules for our workload networks exist.
+ip rule show table rtctl_workload | grep "10.169.10.0 /24"
+ip rule show table rtctl_workload | grep "10.169.20.0 /24"
 
 # Assert the expected default gateways exist.
 ip route show table rtctl_frontend | grep default
@@ -366,13 +379,17 @@ ip route show table rtctl_workload | grep default
 ! grep $'2\trtctl_frontend' /etc/iproute2/rt_tables
 ! grep $'3\trtctl_workload' /etc/iproute2/rt_tables
 
-# Assert the expected IP rules DO NOT exist.
+# Assert the expected IP rules DO NOT exist. This also applies to workload networks.
 ! ip rule | grep rtctl_frontend'
 ! ip rule | grep rtctl_workload'
 
 # Assert the expected default gateways DO NOT exist.
 ! ip route show table rtctl_frontend 2>/dev/null
 ! ip route show table rtctl_workload 2>/dev/null
+
+# Assert that rules for our workload networks DO NOT exist.
+! ip rule show table rtctl_workload | grep "10.169.10.0 /24" 2>/dev/null
+! ip rule show table rtctl_workload | grep "10.169.20.0 /24" 2>/dev/null
 
 # Truncate the config file.
 printf '' >/etc/vmware/route-tables.cfg
@@ -384,18 +401,19 @@ printf '' >/etc/vmware/route-tables.cfg
 sleep 1
 
 # Update the config file and assert the appropriate actions occur.
-echo "2,frontend,${DOCKER_NET_2_MAC},${DOCKER_NET_2_CIDR},${DOCKER_NET_2_GATEWAY}" >/etc/vmware/route-tables.cfg
+echo "2,workload,${DOCKER_NET_3_MAC},${DOCKER_NET_3_CIDR},${DOCKER_NET_3_GATEWAY}" >/etc/vmware/route-tables.cfg
 sleep 2
-grep $'2\trtctl_frontend' /etc/iproute2/rt_tables
+grep $'2\trtctl_workload' /etc/iproute2/rt_tables
+ip rule | grep rtctl_workload
+ip route show table rtctl_workload | grep default
+
+# Update the config file and assert the appropriate actions occur.
+echo "3,frontend,${DOCKER_NET_2_MAC},${DOCKER_NET_2_CIDR},${DOCKER_NET_2_GATEWAY}" >> /etc/vmware/route-tables.cfg
+sleep 2
+grep $'3\trtctl_frontend' /etc/iproute2/rt_tables
 ip rule | grep rtctl_frontend
 ip route show table rtctl_frontend | grep default
 
-# Update the config file and assert the appropriate actions occur.
-echo "3,workload,${DOCKER_NET_3_MAC},${DOCKER_NET_3_CIDR},${DOCKER_NET_3_GATEWAY}" >/etc/vmware/route-tables.cfg
-sleep 2
-grep $'3\trtctl_workload' /etc/iproute2/rt_tables
-ip rule | grep rtctl_workload
-ip route show table rtctl_workload | grep default
 EOF
 
   # Copy the test script to the container.
