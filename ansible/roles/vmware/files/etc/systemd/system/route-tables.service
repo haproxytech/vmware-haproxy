@@ -7,7 +7,7 @@ Description=route-tables.service
 # This service *must* run after cloud-init has completed and networking is
 # online (which it is by the time cloud-final has executed), but before HAProxy
 # has started.
-After=cloud-final.service
+After=cloud-final.service net-postconfig.service
 Before=anyip-routes.service haproxy.service
 
 [Install]
@@ -29,3 +29,5 @@ ExecStart=/var/lib/vmware/routetablectl.sh watch
 
 # Remove the Any IP routes.
 ExecStopPost=/var/lib/vmware/routetablectl.sh down
+
+Restart=always

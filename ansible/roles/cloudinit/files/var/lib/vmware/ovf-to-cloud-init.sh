@@ -112,29 +112,6 @@ getRootPwd () {
     escapeString "$salt"
 }
 
-bindSSHToIP() {
-    sed -i -e 's/#ListenAddress 0.0.0.0/ListenAddress '"${1}"'/' /etc/ssh/sshd_config
-    echo "SSH is now bound to IP address ${1}"
-}
-
-bindDataPlaneAPIToIP() {
-    sed -i -e 's/TLS_HOST=0.0.0.0/TLS_HOST='"${1}"'/' "${data_plane_api_cfg}"
-    echo "Data Plane API is now bound to IP address ${1}"
-}
-
-bindServicesToManagementIP() {
-    ip=$(ovf-rpctool get.ovf "$management_ip_key")
-    if [ "$ip" == "" ] || [ "$ip" == "null" ]; then
-        echo "management IP must be static" 1>&2
-        return 1
-    else
-        ip="${ip%/*}"
-        echo "binding SSH and Data Plane API to the management IP address ${ip}"
-        bindSSHToIP "${ip}"
-        bindDataPlaneAPIToIP "${ip}"
-    fi
-}
-
 setDataPlaneAPIPort() {
     port=$(ovf-rpctool get.ovf "loadbalance.dataplane_port")
     if [ "${port}" == "" ] || [ "${port}" == "0" ] || [ "${port}" == "null" ]; then
@@ -261,6 +238,7 @@ publishUserdata () {
     encoded_userdata=$(sed \
     -e 's/ROOT_PWD_FROM_OVFENV/'"$(getRootPwd)"'/' \
     -e 's/CREATE_DEFAULT_CA/'"$(getCreateDefaultCA)"'/' \
+    -e 's/MGMT_IFACE_NAME/'"${management_net_name}"'/' \
     userdata.txt | base64)
 
     echo "$encoded_userdata" > "$encoded_userdata_path"
@@ -320,7 +298,16 @@ writeAnyipConfig () {
 disableDefaultRoute () {
     ip=$(ovf-rpctool get.ovf "$1")
     if [ "$ip" == "" ] || [ "$ip" == "null" ]; then
-        echo "ip route del \$(ip route list | grep -E \"default.*$2.*dhcp\" | cut -d ' ' -f 1-5)" >>"${net_postconfig_path}"
+		# DHCP.
+        network="${2}"
+        mac=$(getMacForNetwork "$network")
+        net_dropin_dir="/usr/lib/systemd/network/10-${network}.network.d"
+        mkdir -p "$net_dropin_dir"
+        echo -e "[DHCP]\nUseGateway=false" > "${net_dropin_dir}/10-dhcp.conf"
+
+        # Ensure systemd-networkd can read the drop-in conf file.
+        chmod a+rx "$net_dropin_dir"
+        chmod a+r "${net_dropin_dir}/10-dhcp.conf"
     fi
 }
 
@@ -329,32 +316,28 @@ disableDefaultRoute () {
 # Input values:
 # - 1 Table ID
 # - 2 Table Name
-# - 3 IP Key
-# - 4 Gateway Key
+# - 3 Gateway Key
 writeRouteTableConfig() {
     id="${1}"
-    gateway=$(ovf-rpctool get.ovf "${4}")
-    if [ "${gateway}" == "" ] || [ "${gateway}" == "null" ]; then
-        return 0
-    fi
     network="${2}"
+    gateway=$(ovf-rpctool get.ovf "${3}")
     mac=$(getMacForNetwork "$network")
-    ip=$(ovf-rpctool get.ovf "${3}")
-    if [ "$ip" != "" ] && [ "$ip" != "null" ]; then
-        # Default Gateway
-        echo "${id},${network},${mac},${ip},${gateway}" >> "/etc/vmware/route-tables.cfg"
-        # Link-scoped route
-        echo "${id},${network},${mac},${ip}" >> "/etc/vmware/route-tables.cfg"
+    echo "writeRouteTableConfig ${id} ${network} ${mac} ${gateway}" >>"${net_postconfig_path}"
+}
+
+# Disable default routes created automatically when using DHCP.
+disableDefaultRoutes () {
+    disableDefaultRoute "${workload_ip_key}" "${workload_net_name}"
+    if getMacForNetwork "${frontend_net_name}"; then
+        disableDefaultRoute "${frontend_ip_key}" "${frontend_net_name}"
     fi
 }
 
 # Write network postconfig actions to the script run by the net-postconfig service
 writeNetPostConfig () {
-    disableDefaultRoute "${workload_ip_key}" "${workload_net_name}"
-    writeRouteTableConfig 2 "${workload_net_name}" "${workload_ip_key}" "${workload_gw_key}"
+    writeRouteTableConfig 2 "${workload_net_name}" "${workload_gw_key}"
     if getMacForNetwork "${frontend_net_name}"; then
-        disableDefaultRoute "${frontend_ip_key}" "${frontend_net_name}"
-        writeRouteTableConfig 3 "${frontend_net_name}" "${frontend_ip_key}" "${frontend_gw_key}"
+        writeRouteTableConfig 3 "${frontend_net_name}" "${frontend_gw_key}"
     fi
 }
 
@@ -364,12 +347,12 @@ if [ ! -f "$first_boot_path" ]; then
     publishUserdata
     publishMetadata
     permitRootViaSSH
-    bindServicesToManagementIP
     setHAProxyUserPass
     setDataPlaneAPIPort
     writeCAfiles
     writeAnyipConfig
     writeWorkloadNetworks
+    disableDefaultRoutes
     writeNetPostConfig
 else
     ensureMetadata

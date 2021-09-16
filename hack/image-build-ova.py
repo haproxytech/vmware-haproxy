@@ -597,19 +597,19 @@ EVALUATION LICENSE.  If You are licensing the Software for evaluation purposes, 
       </Property>
       <Property ovf:key="management_ip" ovf:type="string" ovf:userConfigurable="true">
         <Label>2.3. Management IP</Label>
-        <Description>The static IP address for the appliance on the Management Port Group in CIDR format (Eg. ip/subnet mask bits). This cannot be DHCP.</Description>
+        <Description>The static IP address for the appliance on the Management Port Group in CIDR format (Eg. ip/subnet mask bits). If unset, DHCP will be used to get IP (not recommended for production setups). When using DHCP ensure IP does not change.</Description>
       </Property>
       <Property ovf:key="management_gateway" ovf:type="string" ovf:userConfigurable="true">
         <Label>2.4. Management Gateway</Label>
-        <Description>The gateway address for the workload network. This is also the default gateway for the appliance.</Description>
+        <Description>The gateway address for the workload network. If unset, DHCP will be used to get gateway IP. This is also the default gateway for the appliance.</Description>
       </Property>
       <Property ovf:key="workload_ip" ovf:type="string" ovf:userConfigurable="true">
         <Label>2.5. Workload IP</Label>
-        <Description>The static IP address for the appliance on the Workload Port Group in CIDR format (Eg. ip/subnet mask bits). This IP must be outside of the Load Balancer IP Range</Description>
+        <Description>The static IP address for the appliance on the Workload Port Group in CIDR format (Eg. ip/subnet mask bits). If unset, DHCP will be used to get IP. This IP must be outside of the Load Balancer IP Range</Description>
       </Property>
       <Property ovf:key="workload_gateway" ovf:type="string" ovf:userConfigurable="true">
         <Label>2.6. Workload Gateway</Label>
-        <Description>The gateway address for the workload network</Description>
+        <Description>The gateway address for the workload network. If unset, DHCP will be used to get gateway IP.</Description>
       </Property>
       <Property ovf:key="additional_workload_networks" ovf:type="string" ovf:userConfigurable="true">
         <Label>2.7. Additional Workload Networks</Label>
@@ -617,11 +617,11 @@ EVALUATION LICENSE.  If You are licensing the Software for evaluation purposes, 
       </Property>
       <Property ovf:key="frontend_ip" ovf:type="string" ovf:userConfigurable="true" ovf:configuration="frontend">
         <Label>2.8. Frontend IP</Label>
-        <Description>(Optional) The static IP address for the appliance on the Frontend Port Group in CIDR format (Eg. ip/subnet mask bits). This IP must be outside of the Load Balancer IP Range</Description>
+        <Description>(Optional) The static IP address for the appliance on the Frontend Port Group in CIDR format (Eg. ip/subnet mask bits). If unset, DHCP will be used to get IP. This IP must be outside of the Load Balancer IP Range</Description>
       </Property>
       <Property ovf:key="frontend_gateway" ovf:type="string" ovf:userConfigurable="true" ovf:configuration="frontend">
         <Label>2.9. Frontend Gateway</Label>
-        <Description>(Optional) The gateway address for the frontend network</Description>
+        <Description>(Optional) The gateway address for the frontend network. If unset, DHCP will be used to get gateway IP.</Description>
       </Property>
     </ProductSection>
     <ProductSection ovf:class="loadbalance" ovf:required="false">

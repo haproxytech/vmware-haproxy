@@ -11,3 +11,5 @@ runcmd:
     - dd if=/dev/random of=/tmp/.random bs=256 count=1
     - RANDFILE=/tmp/.random /var/lib/vmware/retry.sh "new-cert.sh -n -1 /etc/haproxy/ca.crt -2 /etc/haproxy/ca.key -3 "127.0.0.1,{{ ds.meta_data.network.interfaces.by_ipv4.keys()|join(',') }}" -4 "localhost" "{{ ds.meta_data.hostname }}" /etc/haproxy" 2>&1 | tee /var/log/vmware/new_cert.log
     - vmware-rpctool "info-set guestinfo.dataplaneapi.cacert $(base64 -w0 /etc/haproxy/ca.crt)"
+    - ip -4 address show MGMT_IFACE_NAME | grep 'scope global' | awk '{print $2}' | cut -d/ -f1 | xargs -I{} sed -i -e 's/#ListenAddress 0.0.0.0/ListenAddress {}/' /etc/ssh/sshd_config; systemctl restart sshd
+    - ip -4 address show MGMT_IFACE_NAME | grep 'scope global' | awk '{print $2}' | cut -d/ -f1 | xargs -I{} sed -i -e 's/TLS_HOST=0.0.0.0/TLS_HOST={}/' /etc/haproxy/dataplaneapi.cfg
