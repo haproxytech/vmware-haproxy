@@ -18,25 +18,6 @@
   until: cloudinit is not failed
   retries: 50
 
-- name: Download cloud-init datasource for VMware Guestinfo
-  get_url:
-    url:  '{{ guestinfo_datasource_url }}'
-    dest: /tmp/cloud-init-vmware.sh
-  register: cloudInitExec
-  until: cloudInitExec is not failed
-  retries: 50
-
-- name: Execute cloud-init-vmware.sh
-  shell: bash -o errexit -o pipefail /tmp/cloud-init-vmware.sh
-  environment:
-    REPO_SLUG: '{{ guestinfo_datasource_slug }}'
-    GIT_REF:   '{{ guestinfo_datasource_ref }}'
-
-- name: Remove cloud-init-vmware.sh
-  file:
-    path:  /tmp/cloud-init-vmware.sh
-    state: absent
-
 - name: Remove cloud-init /etc/cloud/cloud.cfg.d/99-disable-networking-config.cfg
   file:
     path: /etc/cloud/cloud.cfg.d/99-disable-networking-config.cfg
@@ -70,6 +51,15 @@
     group: root
     mode: "0644"
 
+- name: Set VMware as cloud-init datasource
+  copy:
+    src: files/etc/cloud/cloud.cfg.d/99-DataSourceVMware.cfg
+    dest: /etc/cloud/cloud.cfg.d/99-DataSourceVMware.cfg
+    owner: root
+    group: root
+    mode: "0644"
+  when: ansible_os_family == "VMware Photon OS"
+
 - name: Add net-postconfig service
   copy:
     src: files/etc/systemd/system/net-postconfig.service
@@ -101,15 +91,6 @@
     owner: root
     group: root
     mode: "0444"
-
-- name: Add cloud-init dscheck script
-  copy:
-    src: files/usr/bin/dscheck_VMwareGuestInfo.sh
-    dest: /usr/bin/dscheck_VMwareGuestInfo
-    force: true
-    owner: root
-    group: root
-    mode: "0744"
 
 - name: Add net-postconfig script
   copy:
