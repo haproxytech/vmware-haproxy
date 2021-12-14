@@ -37,6 +37,7 @@ common_photon_rpms:
 - socat
 - tar
 - tcpdump
+- traceroute
 - unzip
 - vim
 
