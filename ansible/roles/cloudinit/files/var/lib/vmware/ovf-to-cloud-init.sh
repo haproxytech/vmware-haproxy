@@ -140,10 +140,12 @@ setHAProxyUserPass() {
 formatCertificate () {
     sed -i \
     -e 's/BEGIN /BEGIN_/g' \
+    -e 's/RSA /RSA_/g' \
     -e 's/PRIVATE /PRIVATE_/g' \
     -e 's/END /END_/g' \
     -e 's/ /\n/g' \
     -e 's/BEGIN_/BEGIN /g' \
+    -e 's/RSA_/RSA /g' \
     -e 's/PRIVATE_/PRIVATE /g' \
     -e 's/END_/END /g' \
     "$1"
