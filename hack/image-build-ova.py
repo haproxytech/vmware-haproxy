@@ -301,6 +301,7 @@ _OVF_TEMPLATE = '''<?xml version='1.0' encoding='UTF-8'?>
       <vmw:Config ovf:required="false" vmw:key="bootOptions.efiSecureBootEnabled" vmw:value="false"/>
       <vmw:Config ovf:required="false" vmw:key="firmware" vmw:value="bios"/>
       <vmw:Config ovf:required="false" vmw:key="virtualICH7MPresent" vmw:value="false"/>
+      <vmw:ExtraConfig ovf:required="false" vmw:key="guest_rpc.auth.cloud-init.set" vmw:value="FALSE"/>
     </VirtualHardwareSection>
     <vmw:StorageSection ovf:required="false" vmw:group="group1">
       <Info>Storage policy group reference</Info>
